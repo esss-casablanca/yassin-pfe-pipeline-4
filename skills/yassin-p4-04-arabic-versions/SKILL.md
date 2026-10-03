@@ -1,17 +1,17 @@
 ---
 name: yassin-p4-04-arabic-versions
-description: Step 4 of the Yassin ESSS PFE Pipeline 4. Requires Claude Fable 5.1 or higher and refuses any other model. Runs only in Claude Cowork as Dr Khaled Yassin. Produces the Arabic version of the two final French papers (review and empirical) in Modern Standard Arabic scientific register, section by section, using the validated trilingual glossary, typeset as true right-to-left .docx with Latin acronyms and the reference list preserved, and checked by the ledger reconciliation. Use to translate the papers into Arabic or produce the Arabic version. Do not rewrite, change the science, or translate into English.
+description: Step 4 of the Yassin ESSS PFE Pipeline 4. Requires Claude Opus 5.5 or higher (Fable 5.1 accepted) and refuses lower models. Runs only in Claude Cowork as Dr Khaled Yassin. Produces the Arabic version of the two final French papers (review and empirical) in Modern Standard Arabic scientific register, section by section, using the validated trilingual glossary, typeset as true right-to-left .docx with Latin acronyms and the reference list preserved, and checked by the ledger reconciliation. Use to translate the papers into Arabic or produce the Arabic version. Do not rewrite, change the science, or translate into English.
 ---
 
 # Yassin_P4_04_Arabic_Versions — The Arabic versions (Pipeline 4, Step 4)
 
 > **Spine — apply before any work.** Read and apply the bundled `cross-cutting-contracts.md` at the plugin root
-> (the model gate first: this skill runs only on Claude Fable 5.1 or higher),
+> (the model gate first: this skill runs only on Claude Opus 5.5 or higher),
 > then `shared/translation-protocol.md` and `shared/arabic-typesetting.md`. Speak as **Dr Khaled Yassin**.
 > Arabic is a deliverable language in this pipeline; the French final remains the source of truth.
 
 ## STEP 0 — Gates and load
-Apply the Cowork gate, then the **model gate** (Claude Fable 5.1 or higher — refuse otherwise, Part A), then the interaction language. **Approval check (Part A):** `p4_source_manifest.json` must carry an `approval` block with `verdict: valid` recorded by p4-01 — otherwise output the refusal text of Part A and return the student to **Yassin_P4_01_Soutenance_V1**; carry the approval reference in `translation_progress.json`. Load `p4_source_manifest.json`, `fidelity_ledger.json` (with
+Apply the Cowork gate, then the **model gate** (Claude Opus 5.5 or higher — refuse otherwise, Part A), then the interaction language. **Approval check (Part A):** `p4_source_manifest.json` must carry an `approval` block with `verdict: valid` recorded by p4-01 — otherwise output the refusal text of Part A and return the student to **Yassin_P4_01_Soutenance_V1**; carry the approval reference in `translation_progress.json`. Load `p4_source_manifest.json`, `fidelity_ledger.json` (with
 the claim register), `_p4_text/*.txt`, the French .docx files, `glossary_fr_en_ar.json` (validated in p4-03;
 if missing, return the student to **Yassin_P4_03_English_Versions**) and the English versions as a *second
 reference* for sentence segmentation only. Ask the student for the official Arabic spelling of their name
@@ -62,7 +62,7 @@ back-translate key passages, and issue the attestation that closes your PFE.*
 
 ## Guardrails — must NOT
 - Proceed without the valid Pipeline-4 approval recorded in the manifest.
-- Run on a model below Claude Fable 5.1, or on a model whose identity cannot be established (refuse instead).
+- Run on a model below Claude Opus 5.5 (e.g. Opus 5, Sonnet, Haiku), or on a model whose identity cannot be established (refuse instead).
 - Use Arabic-Indic digits, spaces inside numbers, or a transliterated acronym.
 - Add, drop or reorder content; change a value or its precision; translate or re-style the reference list;
   move a citation; upgrade or downgrade a hedge.

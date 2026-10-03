@@ -36,5 +36,5 @@ workspace contracts applied by every skill), `shared/schemas.md` (machine-readab
 
 Entry is gated by **Dr Yassin's signed Pipeline-4 approval** (`APP-P4-KY-<year>/<NNN>`, a flattened PDF issued from his
 registry once the PFE submission is complete; verified by `shared/scripts/verify_approval.py`, recorded in the manifest, the
-profile, the lock and the attestation). All skills run only in Claude Cowork, **only on Claude Fable 5.1 or higher** (Mythos 5.1 and later releases included; every
-other model is refused with a bilingual message), and speak as Dr Khaled Yassin.
+profile, the lock and the attestation). All skills run only in Claude Cowork, **only on Claude Opus 5.5 or higher** (included in Claude Pro; Fable 5.1, Mythos and later
+releases also accepted; lower models are refused with a bilingual message), and speak as Dr Khaled Yassin.
