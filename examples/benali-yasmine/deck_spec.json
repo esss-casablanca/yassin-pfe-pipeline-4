@@ -1,0 +1,469 @@
+{
+  "meta": {
+    "academic_year": "2025/2026",
+    "footer": "Soutenance PFE · ESSS · P23",
+    "presentation_minutes": 15
+  },
+  "slides": [
+    {
+      "type": "title",
+      "title": "Satisfaction au travail et intention de rester chez les infirmiers : revue systématique régionale et étude transversale à Casablanca",
+      "subtitle": "Yasmine BENALI · Sciences infirmières · Promotion P23 · Encadrant académique : Dr Khaled YASSIN",
+      "notes": "[⏱ 30 s]\nMonsieur le Président, Mesdames et Messieurs les membres du jury, bonjour. Je m’appelle Yasmine Benali et je vous présente mon projet de fin d’études, composé de deux articles liés : une revue systématique régionale et une étude transversale menée à Casablanca, toutes deux consacrées à la satisfaction au travail et à l’intention de rester chez les infirmiers.\n→ Transition : « Voici le plan de ma présentation. »",
+      "seconds": 30
+    },
+    {
+      "type": "bullets",
+      "title": "Plan de la présentation",
+      "bullets": [
+        "Problématique et question de recherche",
+        "Composante 1 — Revue systématique (PRISMA)",
+        "Composante 2 — Étude transversale (STROBE)",
+        "Limites et discussion",
+        "Conclusion et apport du projet"
+      ],
+      "notes": "[⏱ 20 s]\nJe présenterai d’abord la problématique, puis la revue systématique, puis l’étude empirique qu’elle a motivée, avant de discuter les limites et de conclure sur l’apport du projet.\n→ Transition : « Commençons par la problématique. »",
+      "seconds": 20
+    },
+    {
+      "type": "section",
+      "title": "Problématique et question de recherche",
+      "subtitle": "Pourquoi la rétention des infirmiers, et pourquoi au Maroc ?",
+      "seconds": 10
+    },
+    {
+      "type": "bullets",
+      "title": "Pourquoi la rétention des infirmiers est-elle un enjeu ?",
+      "bullets": [
+        "Pénurie infirmière dans la plupart des pays de la région",
+        "Au Maroc : 1,0 infirmier pour 1 000 habitants",
+        "La satisfaction au travail : un déterminant modifiable",
+        "Synthèses existantes centrées sur l’Amérique du Nord et l’Europe"
+      ],
+      "notes": "[⏱ 50 s]\nLa pénurie infirmière touche la plupart des pays de notre région. Au Maroc, la densité infirmière est estimée à 1,0 pour 1 000 habitants, l’une des plus faibles de la région. Parmi les déterminants de la rétention, la satisfaction au travail est considérée comme modifiable ; mais les synthèses disponibles portent surtout sur l’Amérique du Nord et l’Europe.\n→ Transition : « D’où nos deux questions. »\nSi le jury demande : Q01 (pertinence), Q02 (choix du Maroc)",
+      "seconds": 50
+    },
+    {
+      "type": "two_columns",
+      "title": "Que voulons-nous savoir ?",
+      "left_label": "Composante 1 — Revue systématique",
+      "left": [
+        "Dans la région, la satisfaction au travail est-elle associée à l’intention de rester ?",
+        "MEDLINE, Scopus, CINAHL · 2010–2026",
+        "PRISMA 2020 · qualité JBI"
+      ],
+      "right_label": "Composante 2 — Étude empirique",
+      "right": [
+        "Mesurer cette association chez les infirmiers du secteur public à Casablanca",
+        "Étude transversale analytique · STROBE",
+        "MSQ-SF (20 items) · échelle d’intention (3 items)"
+      ],
+      "notes": "[⏱ 60 s]\nLa revue répond à une question régionale : la satisfaction au travail est-elle associée à l’intention de rester chez les infirmiers de la région ? L’étude empirique répond à la question que la revue a laissée ouverte au Maroc : mesurer cette association dans le secteur public casablancais, avec un instrument validé, le MSQ-SF, et une échelle d’intention de rester en trois items.\n→ Transition : « Voyons d’abord la revue. »\nSi le jury demande : Q06 (lien entre les deux composantes)",
+      "seconds": 60
+    },
+    {
+      "type": "section",
+      "title": "Composante 1 — Revue systématique",
+      "subtitle": "Méthodes, flux PRISMA, synthèse",
+      "seconds": 10
+    },
+    {
+      "type": "bullets",
+      "title": "Comment avons-nous conduit la revue ?",
+      "bullets": [
+        "PRISMA 2020 ; MEDLINE, Scopus, CINAHL ; 1er janvier 2010 – 31 mars 2026",
+        "Infirmiers en exercice ; mesure quantitative de la satisfaction et de l’intention",
+        "Sélection par deux relecteurs indépendants, consensus",
+        "Qualité : liste JBI pour études transversales",
+        "Synthèse narrative (instruments hétérogènes)"
+      ],
+      "notes": "[⏱ 50 s]\nLa revue a suivi PRISMA 2020. Nous avons interrogé MEDLINE, Scopus et CINAHL du 1er janvier 2010 au 31 mars 2026, sans restriction de langue. Deux relecteurs ont sélectionné les études indépendamment, les désaccords étant résolus par consensus. La qualité a été évaluée avec la liste JBI. L’hétérogénéité des instruments nous a conduits à une synthèse narrative plutôt qu’à une méta-analyse.\n→ Transition : « Voici le flux de sélection. »\nSi le jury demande : Q03 (pourquoi pas de méta-analyse), Q04 (bases interrogées)",
+      "seconds": 50
+    },
+    {
+      "type": "bullets",
+      "title": "Flux PRISMA : de 1 248 références à 23 études",
+      "bullets": [
+        "1 248 références identifiées",
+        "312 doublons supprimés → 936 titres et résumés examinés",
+        "71 textes intégraux évalués",
+        "23 études incluses · 9 pays · n total = 9 874 infirmiers",
+        "4 études marocaines : secteur privé ou instrument non validé"
+      ],
+      "notes": "[⏱ 45 s]\nLa recherche a identifié 1 248 références. Après suppression de 312 doublons, 936 titres et résumés ont été examinés, 71 textes intégraux évalués et 23 études incluses, provenant de 9 pays, pour un effectif cumulé de 9 874 infirmiers. Les 4 études marocaines portaient sur le secteur privé ou utilisaient un instrument non validé.\n→ Transition : « Que disent ces 23 études ? »\nSi le jury demande : Q05 (études exclues)",
+      "seconds": 45
+    },
+    {
+      "type": "table",
+      "title": "Quelles sont les études incluses ?",
+      "header": [
+        "Caractéristique",
+        "Nombre d’études",
+        "%"
+      ],
+      "rows": [
+        [
+          "Design transversal",
+          "23",
+          "100,0"
+        ],
+        [
+          "Instrument validé de satisfaction",
+          "17",
+          "73,9"
+        ],
+        [
+          "Secteur public uniquement",
+          "11",
+          "47,8"
+        ],
+        [
+          "Qualité JBI élevée (≥ 6/8)",
+          "14",
+          "60,9"
+        ]
+      ],
+      "font_pt": 16,
+      "col_widths": [
+        3,
+        1.2,
+        0.8
+      ],
+      "caption": "Tableau 1. Caractéristiques des études incluses (n = 23)",
+      "notes": "[⏱ 40 s]\nToutes les études incluses sont transversales. Dix-sept, soit 73,9 %, utilisent un instrument validé de satisfaction ; onze portent uniquement sur le secteur public ; quatorze, soit 60,9 %, sont de qualité JBI élevée.\n→ Transition : « Et l’association elle-même ? »",
+      "seconds": 40
+    },
+    {
+      "type": "bullets",
+      "title": "La satisfaction est associée à l’intention de rester dans 21 études sur 23",
+      "bullets": [
+        "21 études (91,3 %) : association positive et significative",
+        "2 études : pas d’association",
+        "Satisfaction intrinsèque : dimension la plus souvent associée (15 études)",
+        "Satisfaction extrinsèque : 9 études",
+        "Odds ratios rapportés : de 1,3 à 3,2"
+      ],
+      "notes": "[⏱ 55 s]\nVingt et une études, soit 91,3 %, rapportent une association positive et statistiquement significative entre la satisfaction globale et l’intention de rester ; deux ne retrouvent pas d’association. La satisfaction intrinsèque — reconnaissance, autonomie, sens du travail — est la dimension la plus souvent associée, dans 15 études, devant la satisfaction extrinsèque, dans 9 études. Les odds ratios rapportés vont de 1,3 à 3,2.\n→ Transition : « Mais une lacune est apparue. »\nSi le jury demande : Q07 (hétérogénéité des instruments)",
+      "seconds": 55
+    },
+    {
+      "type": "bullets",
+      "title": "Quelle lacune la revue a-t-elle révélée ?",
+      "bullets": [
+        "Toutes les études sont transversales : aucune inférence causale",
+        "6 études (26,1 %) avec instruments non validés",
+        "Aucune étude marocaine en secteur public avec instrument validé",
+        "→ C’est la question de la Composante 2"
+      ],
+      "notes": "[⏱ 40 s]\nLes données suggèrent une association robuste, mais elles sont exclusivement transversales et six études, soit 26,1 %, ont utilisé des instruments non validés. Surtout, aucune étude marocaine n’a mesuré l’association dans le secteur public avec un instrument validé. C’est précisément cette lacune que la Composante 2 se propose de combler.\n→ Transition : « Passons à l’étude empirique. »",
+      "seconds": 40
+    },
+    {
+      "type": "section",
+      "title": "Composante 2 — Étude transversale analytique",
+      "subtitle": "Trois hôpitaux publics de Casablanca, février–mars 2026",
+      "seconds": 10
+    },
+    {
+      "type": "bullets",
+      "title": "Comment avons-nous mené l’étude ?",
+      "bullets": [
+        "Transversale analytique, rapportée selon STROBE",
+        "Trois hôpitaux publics de Casablanca, 3 février – 28 mars 2026",
+        "Infirmiers diplômés d’État en poste depuis ≥ 6 mois",
+        "Taille prévue : 150 (OR 1,5 ; puissance 80 % ; alpha 5 %)",
+        "Attestation de dispense éthique ESSS ; autorisations des trois établissements"
+      ],
+      "notes": "[⏱ 55 s]\nIl s’agit d’une étude transversale analytique, rapportée selon STROBE, conduite du 3 février au 28 mars 2026 dans trois hôpitaux publics de Casablanca. Étaient éligibles les infirmiers diplômés d’État en poste depuis au moins six mois. La taille d’échantillon prévue était de 150 participants pour détecter un odds ratio de 1,5 avec une puissance de 80 % et un risque alpha de 5 %. L’étude a reçu l’attestation de dispense éthique de l’ESSS et les autorisations des trois établissements ; la participation était anonyme et volontaire.\n→ Transition : « Avec quels instruments ? »\nSi le jury demande : Q08 (taille d’échantillon), Q14 (éthique)",
+      "seconds": 55
+    },
+    {
+      "type": "two_columns",
+      "title": "Quels instruments et quelle analyse ?",
+      "left_label": "Mesures",
+      "left": [
+        "Satisfaction : MSQ-SF, 20 items, échelle 1–5, traduction française autorisée",
+        "Intention de rester : 3 items, score 3–15, élevée si ≥ 12",
+        "Socle commun : âge, sexe, ancienneté, service, statut"
+      ],
+      "right_label": "Analyse",
+      "right": [
+        "Description ; fiabilité (alpha de Cronbach)",
+        "Régression logistique : intention élevée ~ satisfaction globale (par point)",
+        "Ajustement : âge, sexe, ancienneté, service"
+      ],
+      "notes": "[⏱ 50 s]\nLa satisfaction a été mesurée par le Minnesota Satisfaction Questionnaire version courte, 20 items sur une échelle de 1 à 5, dans sa traduction française autorisée ; l’intention de rester par une échelle de 3 items, le score allant de 3 à 15, une intention élevée étant définie par un score d’au moins 12. L’analyse a comporté une description, l’estimation de la fiabilité et une régression logistique de l’intention élevée sur la satisfaction globale, ajustée sur l’âge, le sexe, l’ancienneté et le service.\n→ Transition : « Qui a participé ? »\nSi le jury demande : Q09 (validité du MSQ-SF), Q10 (seuil d’intention élevée)",
+      "seconds": 50
+    },
+    {
+      "type": "table",
+      "title": "Qui sont les 150 participants ?",
+      "header": [
+        "Caractéristique",
+        "n",
+        "%"
+      ],
+      "rows": [
+        [
+          "Femmes",
+          "98",
+          "65,3"
+        ],
+        [
+          "Âge < 35 ans",
+          "84",
+          "56,0"
+        ],
+        [
+          "Ancienneté ≥ 10 ans",
+          "68",
+          "45,3"
+        ],
+        [
+          "Service de médecine",
+          "52",
+          "34,7"
+        ],
+        [
+          "Service de chirurgie",
+          "47",
+          "31,3"
+        ],
+        [
+          "Urgences et réanimation",
+          "51",
+          "34,0"
+        ]
+      ],
+      "font_pt": 15,
+      "col_widths": [
+        3,
+        0.8,
+        0.8
+      ],
+      "caption": "Tableau 1. Caractéristiques des participants (n = 150) — 242 approchés, taux de réponse 62,0 %",
+      "notes": "[⏱ 45 s]\nSur 242 infirmiers approchés, 150 ont participé, soit un taux de réponse de 62,0 % ; aucun questionnaire n’a été exclu. L’échantillon comprenait 98 femmes, soit 65,3 % ; 56,0 % des participants avaient moins de 35 ans ; les trois types de service étaient représentés à parts proches.\n→ Transition : « Quel niveau de satisfaction ? »\nSi le jury demande : Q11 (représentativité)",
+      "seconds": 45
+    },
+    {
+      "type": "chart",
+      "title": "Un niveau de satisfaction moyen, plus intrinsèque qu’extrinsèque",
+      "chart": {
+        "kind": "column",
+        "categories": [
+          "Satisfaction globale",
+          "Satisfaction intrinsèque",
+          "Satisfaction extrinsèque"
+        ],
+        "series": [
+          {
+            "name": "Score moyen (1–5)",
+            "values": [
+              3.4,
+              3.6,
+              3.1
+            ]
+          }
+        ],
+        "number_format": "0.0",
+        "axis_min": 0,
+        "axis_max": 5,
+        "legend": false,
+        "title": "MSQ-SF : scores moyens (alpha de Cronbach = 0,89)"
+      },
+      "notes": "[⏱ 40 s]\nLa cohérence interne du MSQ-SF était satisfaisante, avec un alpha de Cronbach de 0,89. La satisfaction globale moyenne était de 3,4 sur 5, écart-type 0,6 ; la satisfaction intrinsèque de 3,6 et la satisfaction extrinsèque de 3,1. Une intention de rester élevée était déclarée par 87 participants, soit 58,0 %.\n→ Transition : « Venons-en au résultat principal. »",
+      "seconds": 40
+    },
+    {
+      "type": "table",
+      "title": "La satisfaction est associée à l’intention de rester : OR ajusté 1,42",
+      "header": [
+        "Variable",
+        "OR ajusté",
+        "IC 95 %",
+        "p"
+      ],
+      "rows": [
+        [
+          "Satisfaction globale (par point)",
+          "1,42",
+          "1,10–1,83",
+          "0,008"
+        ],
+        [
+          "Âge (par année)",
+          "1,02",
+          "0,98–1,06",
+          "0,31"
+        ],
+        [
+          "Sexe féminin",
+          "0,91",
+          "0,45–1,84",
+          "0,79"
+        ],
+        [
+          "Ancienneté (par année)",
+          "1,01",
+          "0,96–1,06",
+          "0,70"
+        ],
+        [
+          "Urgences et réanimation (vs médecine)",
+          "0,62",
+          "0,27–1,41",
+          "0,25"
+        ]
+      ],
+      "font_pt": 15,
+      "col_widths": [
+        3,
+        1,
+        1.2,
+        0.8
+      ],
+      "caption": "Tableau 2. Régression logistique de l’intention de rester élevée (n = 150)",
+      "notes": "[⏱ 90 s]\nVoici le résultat principal. Après ajustement sur l’âge, le sexe, l’ancienneté et le service, chaque point supplémentaire de satisfaction globale était associé à une augmentation des chances d’intention de rester élevée : odds ratio ajusté de 1,42, intervalle de confiance à 95 % de 1,10 à 1,83, p égal à 0,008. Aucune des variables d’ajustement n’était significativement associée. Je souligne qu’il s’agit d’une association : le design transversal ne permet pas de dire que la satisfaction cause l’intention de rester.\n→ Transition : « Une analyse exploratoire mérite d’être signalée. »\nSi le jury demande : Q12 (interprétation de l’OR), Q13 (causalité)",
+      "seconds": 90
+    },
+    {
+      "type": "bullets",
+      "title": "Analyse exploratoire : des différences selon le service ?",
+      "bullets": [
+        "Non prévue au protocole — résultat exploratoire",
+        "Intention de rester élevée : 47,1 % aux urgences et en réanimation",
+        "contre 65,4 % en médecine (p = 0,04)",
+        "À confirmer par une étude dédiée"
+      ],
+      "notes": "[⏱ 35 s]\nDans une analyse exploratoire non prévue au protocole, la proportion d’intention de rester élevée était plus faible aux urgences et en réanimation, 47,1 %, qu’en médecine, 65,4 %, p égal à 0,04. Ce résultat doit être considéré comme exploratoire et demande confirmation.\n→ Transition : « Avant de discuter, les limites. »",
+      "seconds": 35
+    },
+    {
+      "type": "section",
+      "title": "Limites et discussion",
+      "subtitle": "Ce que les deux composantes permettent — et ne permettent pas — de dire",
+      "seconds": 10
+    },
+    {
+      "type": "two_columns",
+      "title": "Quelles sont les limites du projet ?",
+      "left_label": "Composante 1 — Revue",
+      "left": [
+        "Études exclusivement transversales : pas d’inférence causale",
+        "6 études (26,1 %) avec instruments non validés",
+        "Synthèse narrative, pas de méta-analyse"
+      ],
+      "right_label": "Composante 2 — Étude",
+      "right": [
+        "Design transversal : aucune inférence causale",
+        "Mesures auto-rapportées : biais de méthode commune",
+        "Trois hôpitaux de Casablanca : généralisation limitée",
+        "Taux de réponse 62,0 % : biais de participation possible",
+        "Résultat par service exploratoire"
+      ],
+      "notes": "[⏱ 60 s]\nLes limites de la revue tiennent aux études incluses : toutes transversales, six avec des instruments non validés, et une hétérogénéité qui a imposé une synthèse narrative. Les limites de l’étude sont celles d’un design transversal : aucune inférence causale n’est possible ; les mesures auto-rapportées exposent à un biais de méthode commune ; l’échantillon, limité à trois hôpitaux de Casablanca, ne permet pas de généraliser à l’ensemble du secteur public ; le taux de réponse de 62,0 % expose à un biais de participation ; et le résultat par service est exploratoire.\n→ Transition : « Que retenir malgré ces limites ? »\nSi le jury demande : Q15 (biais de participation), Q16 (méthode commune)",
+      "seconds": 60
+    },
+    {
+      "type": "bullets",
+      "title": "Que nous apprennent les deux composantes ensemble ?",
+      "bullets": [
+        "Première mesure de l’association en secteur public marocain avec un instrument validé",
+        "OR ajusté 1,42 : dans l’étendue régionale (1,3 à 3,2)",
+        "Satisfaction intrinsèque > extrinsèque : cohérent avec les études régionales",
+        "Les leviers intrinsèques — reconnaissance, autonomie, sens du travail — méritent l’attention des gestionnaires"
+      ],
+      "notes": "[⏱ 55 s]\nCette étude est, à notre connaissance, la première à mesurer cette association chez des infirmiers du secteur public marocain avec un instrument validé. L’association observée, odds ratio ajusté de 1,42, se situe dans l’étendue rapportée par la revue, de 1,3 à 3,2. Le niveau de satisfaction intrinsèque supérieur au niveau extrinsèque est cohérent avec les études régionales. Ce résultat suggère que les leviers de satisfaction intrinsèque méritent l’attention des gestionnaires.\n→ Transition : « J’en viens à la conclusion. »\nSi le jury demande : Q17 (implications pratiques)",
+      "seconds": 55
+    },
+    {
+      "type": "section",
+      "title": "Conclusion et apport du projet",
+      "subtitle": "",
+      "seconds": 10
+    },
+    {
+      "type": "bullets",
+      "title": "Et alors ? L’apport de ce projet",
+      "bullets": [
+        "Une synthèse régionale : 23 études, association présente dans 21",
+        "Une lacune identifiée puis comblée : secteur public marocain, instrument validé",
+        "Une association mesurée : OR ajusté 1,42 (IC 95 % : 1,10–1,83)",
+        "Perspective : une étude longitudinale pour établir le sens de la relation"
+      ],
+      "notes": "[⏱ 60 s]\nEn conclusion, ce projet apporte une synthèse régionale de 23 études, dans lesquelles l’association est présente dans 21 ; il identifie une lacune — l’absence d’étude marocaine en secteur public avec un instrument validé — et la comble par une mesure : un odds ratio ajusté de 1,42, intervalle de confiance à 95 % de 1,10 à 1,83. Il suggère enfin que les leviers de satisfaction intrinsèque méritent l’attention des gestionnaires, et qu’une étude longitudinale est nécessaire pour établir le sens de la relation.\n→ Transition : « Je vous remercie de votre attention. »\nSi le jury demande : Q18 (perspectives), Q20 (réflexion personnelle)",
+      "seconds": 60
+    },
+    {
+      "type": "closing",
+      "title": "Merci de votre attention",
+      "subtitle": "Yasmine BENALI — je suis à votre disposition pour vos questions",
+      "seconds": 10
+    },
+    {
+      "type": "annex_marker",
+      "title": "Annexes",
+      "subtitle": "Documents d’appui pour les questions du jury"
+    },
+    {
+      "type": "bullets",
+      "title": "Annexe 1 — Stratégie de recherche de la revue",
+      "bullets": [
+        "MEDLINE, Scopus, CINAHL ; 1er janvier 2010 – 31 mars 2026 ; sans restriction de langue",
+        "Critères : infirmiers en exercice ; mesure quantitative de la satisfaction et de l’intention ; pays de la région",
+        "Deux relecteurs indépendants ; consensus ; liste JBI"
+      ],
+      "notes": "Répond aux questions Q03–Q05."
+    },
+    {
+      "type": "table",
+      "title": "Annexe 2 — Tableau 2 complet (régression logistique)",
+      "header": [
+        "Variable",
+        "OR ajusté",
+        "IC 95 %",
+        "p"
+      ],
+      "rows": [
+        [
+          "Satisfaction globale (par point)",
+          "1,42",
+          "1,10–1,83",
+          "0,008"
+        ],
+        [
+          "Âge (par année)",
+          "1,02",
+          "0,98–1,06",
+          "0,31"
+        ],
+        [
+          "Sexe féminin",
+          "0,91",
+          "0,45–1,84",
+          "0,79"
+        ],
+        [
+          "Ancienneté (par année)",
+          "1,01",
+          "0,96–1,06",
+          "0,70"
+        ],
+        [
+          "Urgences et réanimation (vs médecine)",
+          "0,62",
+          "0,27–1,41",
+          "0,25"
+        ]
+      ],
+      "font_pt": 13,
+      "col_widths": [
+        3,
+        1,
+        1.2,
+        0.8
+      ],
+      "notes": "Répond aux questions Q12–Q13."
+    }
+  ]
+}

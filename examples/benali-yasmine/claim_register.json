@@ -1,0 +1,251 @@
+{
+  "note": "Items the assistant adds by hand in p4-01: the claim register (confirmed with the student) and numbers written in words in the papers.",
+  "items": [
+    {
+      "id": "R-CL-0001",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Titre",
+      "text_fr": "Satisfaction au travail et intention de rester chez les infirmiers en Afrique du Nord et au Moyen-Orient : revue systématique",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0002",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Résumé",
+      "text_fr": "Synthétiser les études ayant mesuré l’association entre la satisfaction au travail et l’intention de rester (ou de quitter) chez les infirmiers de la région.",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0003",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "Sur 1 248 références identifiées, 23 études ont été incluses (n total = 9 874 infirmiers).",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [
+        "R-N-0018",
+        "R-N-0022",
+        "R-N-0026"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0004",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "Vingt et une études (91,3 %) rapportent une association positive et statistiquement significative entre la satisfaction globale et l’intention de rester.",
+      "direction": "positive",
+      "strength": "descriptive",
+      "hedge": "rapportent",
+      "linked_items": [
+        "R-N-0031"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0005",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "La satisfaction intrinsèque est la dimension la plus souvent associée (15 études).",
+      "direction": "positive",
+      "strength": "descriptive",
+      "hedge": "est la plus souvent associée",
+      "linked_items": [
+        "R-N-0032"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0006",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Discussion",
+      "text_fr": "Les résultats suggèrent une association robuste entre la satisfaction au travail et l’intention de rester dans la région ; toutes les études sont transversales, ce qui interdit toute inférence causale.",
+      "direction": "positive",
+      "strength": "hypothesis",
+      "hedge": "suggèrent",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0007",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Discussion",
+      "text_fr": "Limite : 6 études (26,1 %) ont utilisé des instruments non validés.",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [
+        "R-N-0040"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-CL-0008",
+      "paper": "review",
+      "kind": "claim",
+      "section": "Conclusion",
+      "text_fr": "Une étude marocaine en secteur public, avec un instrument validé, est nécessaire (lacune transmise à la Composante 2).",
+      "direction": "n/a",
+      "strength": "hypothesis",
+      "hedge": "est nécessaire",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0001",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Titre",
+      "text_fr": "Satisfaction au travail et intention de rester chez les infirmiers du secteur public à Casablanca : étude transversale analytique",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0002",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Introduction",
+      "text_fr": "Objectif principal : mesurer l’association entre la satisfaction au travail et l’intention de rester dans la profession ; objectifs secondaires : décrire le niveau de satisfaction et explorer les différences selon le service.",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0003",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "Sur 242 infirmiers approchés, 150 ont participé (taux de réponse 62,0 %).",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [
+        "E-N-0038",
+        "E-N-0040"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0004",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "La satisfaction globale moyenne était de 3,4 (DS 0,6) ; une intention de rester élevée était déclarée par 87 participants (58,0 %).",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [
+        "E-N-0052",
+        "E-N-0059"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0005",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "La satisfaction globale était associée à l’intention de rester élevée (OR ajusté = 1,42 ; IC 95 % : 1,10–1,83 ; p = 0,008).",
+      "direction": "positive",
+      "strength": "confirmatory",
+      "hedge": "était associée à",
+      "linked_items": [
+        "E-N-0061",
+        "E-N-0063",
+        "E-N-0064",
+        "E-N-0065"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0006",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Résultats",
+      "text_fr": "Analyse exploratoire non prévue au protocole : intention de rester élevée plus faible aux urgences et en réanimation (47,1 %) qu’en médecine (65,4 %) (p = 0,04) ; résultat exploratoire.",
+      "direction": "negative",
+      "strength": "exploratory",
+      "hedge": "doit être considéré comme exploratoire",
+      "linked_items": [
+        "E-N-0066",
+        "E-N-0067",
+        "E-N-0068"
+      ],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0007",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Discussion",
+      "text_fr": "Limites : design transversal (aucune inférence causale) ; biais de méthode commune ; trois hôpitaux de Casablanca (généralisation limitée) ; taux de réponse de 62,0 % (biais de participation) ; résultat par service exploratoire.",
+      "direction": "n/a",
+      "strength": "descriptive",
+      "hedge": "",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "E-CL-0008",
+      "paper": "empirical",
+      "kind": "claim",
+      "section": "Conclusion",
+      "text_fr": "La satisfaction au travail est associée à l’intention de rester ; ce résultat suggère que les leviers de satisfaction intrinsèque méritent l’attention des gestionnaires ; une étude longitudinale est nécessaire.",
+      "direction": "positive",
+      "strength": "hypothesis",
+      "hedge": "suggère",
+      "linked_items": [],
+      "extracted_by": "assistant",
+      "student_confirmed": true
+    },
+    {
+      "id": "R-N-0901",
+      "paper": "review",
+      "kind": "number",
+      "section": "Résultats",
+      "paragraph_index": null,
+      "raw": "Vingt et une",
+      "normalized": "21",
+      "unit": null,
+      "role_hint": "spelled_out",
+      "context": "Vingt et une études (91,3 %) rapportent une association positive…",
+      "extracted_by": "assistant"
+    }
+  ]
+}
