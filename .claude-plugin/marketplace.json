@@ -1,0 +1,20 @@
+{
+  "name": "esss-pfe-pipeline-4",
+  "owner": {
+    "name": "Dr Khaled Yassin — ESSS Casablanca",
+    "email": "kyassin174@gmail.com"
+  },
+  "metadata": {
+    "description": "Pipeline 4 du PFE de l'ESSS : soutenance et versions anglaise et arabe des deux articles."
+  },
+  "plugins": [
+    {
+      "name": "yassin-pfe-pipeline-4",
+      "source": "./",
+      "description": "Pipeline 4 of the ESSS PFE: soutenance deck, jury-question bank and the English and Arabic versions of the two final French papers, checked against a fidelity ledger.",
+      "author": {
+        "name": "Dr Khaled Yassin"
+      }
+    }
+  ]
+}
