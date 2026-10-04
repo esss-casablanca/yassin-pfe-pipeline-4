@@ -14,14 +14,22 @@ What it extracts, per paper (prefix R- for the review, E- for the empirical arti
 Claims (kind = "claim") are NOT extracted here: the assistant authors them with the student (see schemas.md).
 
 --text-dump writes <paper>_blocks.json and <paper>.txt so the assistant can read the papers section by section.
+
+--carry-over OLD_LEDGER (v0.2.4) rebuilds a ledger made with an older number parser without losing the work done
+with the student: every item of the old ledger that was not extracted by the script (the confirmed claim register,
+numbers written in words) is kept, and its links to script items are remapped to the new ids. Links that cannot be
+remapped are listed in the item (carry_over_unmapped_links) and in the ledger's carry_over report: re-link them by
+hand with the student before going on.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import difflib
 import os
 import re
 import sys
+from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import p4lib as L  # noqa: E402
@@ -130,6 +138,115 @@ def extract_paper(path: str, prefix: str, paper: str, locale: str) -> tuple[list
     return items, summary, blocks
 
 
+def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
+    """Keep the assistant-authored items of an older ledger and remap their links to the new script ids."""
+    old_items = old.get("items", [])
+    old_by_id = {it["id"]: it for it in old_items}
+    keep = [dict(it) for it in old_items if it.get("extracted_by") != "script"]
+
+    by_para_raw: dict[tuple, list[str]] = defaultdict(list)
+    by_para: dict[tuple, list[dict]] = defaultdict(list)
+    tables_new: dict[str, list[dict]] = defaultdict(list)
+    simple_new: dict[tuple, str] = {}
+    for it in new_items:
+        if it["kind"] == "number":
+            by_para_raw[(it["paper"], it.get("paragraph_index"), it["raw"])].append(it["id"])
+            by_para[(it["paper"], it.get("paragraph_index"))].append(it)
+        elif it["kind"] == "table":
+            tables_new[it["paper"]].append(it)
+        elif it["kind"] == "figure":
+            simple_new[(it["paper"], "figure", it["label"])] = it["id"]
+        elif it["kind"] == "citation":
+            simple_new[(it["paper"], "citation", it["key"])] = it["id"]
+        elif it["kind"] == "reference":
+            simple_new[(it["paper"], "reference", it["index"])] = it["id"]
+
+    rank: dict[str, int] = {}
+    seen: dict[tuple, int] = defaultdict(int)
+    old_table_pos: dict[str, int] = {}
+    tcount: dict[str, int] = defaultdict(int)
+    for it in old_items:
+        if it.get("extracted_by") != "script":
+            continue
+        if it["kind"] == "number":
+            key = (it["paper"], it.get("paragraph_index"), it["raw"])
+            rank[it["id"]] = seen[key]
+            seen[key] += 1
+        elif it["kind"] == "table":
+            old_table_pos[it["id"]] = tcount[it["paper"]]
+            tcount[it["paper"]] += 1
+
+    def map_id(oid: str) -> str | None:
+        o = old_by_id.get(oid)
+        if o is None:
+            return None
+        if o.get("extracted_by") != "script":
+            return oid
+        k = o["kind"]
+        if k == "number":
+            ids = by_para_raw.get((o["paper"], o.get("paragraph_index"), o["raw"]), [])
+            r = rank.get(oid, 0)
+            if r < len(ids):
+                return ids[r]
+            cands = by_para.get((o["paper"], o.get("paragraph_index")), [])
+            same = [c for c in cands if c["normalized"] == o["normalized"]]
+            if same:
+                return same[0]["id"]
+            if cands:  # e.g. "2" read from "2.3" by the old parser
+                best = max(cands, key=lambda c: difflib.SequenceMatcher(None, c.get("context", ""), o.get("context", "")).ratio()
+                           + (0.5 if c["normalized"].startswith(o["normalized"]) else 0))
+                if best["normalized"].startswith(o["normalized"]):
+                    return best["id"]
+            return None
+        if k == "table":
+            pos = old_table_pos.get(oid)
+            lst = tables_new.get(o["paper"], [])
+            return lst[pos]["id"] if pos is not None and pos < len(lst) else None
+        if k == "figure":
+            return simple_new.get((o["paper"], "figure", o["label"]))
+        if k == "citation":
+            return simple_new.get((o["paper"], "citation", o["key"]))
+        if k == "reference":
+            return simple_new.get((o["paper"], "reference", o["index"]))
+        return None
+
+    remapped, unmapped = 0, []
+    for it in keep:
+        links = it.get("linked_items") or []
+        new_links, lost = [], []
+        for ln in links:
+            nid = map_id(ln)
+            if nid:
+                new_links.append(nid)
+                remapped += nid != ln
+            else:
+                lost.append(ln)
+        if links:
+            it["linked_items"] = new_links
+        if lost:
+            it["carry_over_unmapped_links"] = lost
+            unmapped.append({"item": it["id"], "lost_links": lost, "text": (it.get("text_fr") or it.get("raw") or "")[:120]})
+
+    # an assistant id that now collides with a script id is renamed, and the links that point to it follow
+    new_ids = {it["id"] for it in new_items}
+    renamed = {}
+    for it in keep:
+        if it["id"] in new_ids:
+            nid = it["id"] + "-H"
+            while nid in new_ids:
+                nid += "H"
+            renamed[it["id"]] = nid
+            it["id"] = nid
+    if renamed:
+        for it in keep:
+            if it.get("linked_items"):
+                it["linked_items"] = [renamed.get(x, x) for x in it["linked_items"]]
+
+    report = {"from_generated_at": old.get("generated_at"), "from_parser_version": str(old.get("parser_version", "1")),
+              "carried_items": len(keep), "links_remapped": remapped, "unmapped": unmapped, "renamed_ids": renamed}
+    return keep, report
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--project", required=True)
@@ -138,11 +255,13 @@ def main() -> int:
     ap.add_argument("--locale", default="fr", choices=["fr", "en", "ar"])
     ap.add_argument("--out", default="fidelity_ledger.json")
     ap.add_argument("--text-dump", help="directory to write <paper>_blocks.json and <paper>.txt")
+    ap.add_argument("--carry-over", help="previous fidelity_ledger.json whose claim register (and other assistant items) must be kept")
     a = ap.parse_args()
     if not a.review and not a.empirical:
         ap.error("give --review and/or --empirical")
 
-    ledger = {"ledger_version": "1.0", "project_id": a.project,
+    old = L.load_json(a.carry_over) if a.carry_over else None
+    ledger = {"ledger_version": "1.0", "parser_version": L.PARSER_VERSION, "project_id": a.project,
               "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
               "sources": {}, "items": [], "summary": {}}
     for paper, prefix, path in (("review", "R", a.review), ("empirical", "E", a.empirical)):
@@ -162,8 +281,24 @@ def main() -> int:
                     else:
                         f.write(b["text"] + "\n\n")
         print(f"{paper:9s} {os.path.basename(path)}: " + ", ".join(f"{k}={v}" for k, v in summary.items() if k != 'claims'))
+    if old is not None:
+        for paper, src in ledger["sources"].items():
+            old_sha = (old.get("sources", {}).get(paper) or {}).get("sha256")
+            if old_sha and old_sha != src["sha256"]:
+                print(f"WARNING: the {paper} source differs from the one of the old ledger (SHA-256 changed) — "
+                      f"check that this is the same final, locked paper before going on.")
+        keep, report = carry_over(old, ledger["items"])
+        ledger["items"].extend(keep)
+        for p in ledger["summary"]:
+            ledger["summary"][p]["claims"] = sum(1 for it in keep if it.get("paper") == p and it.get("kind") == "claim")
+            ledger["summary"][p]["numbers"] += sum(1 for it in keep if it.get("paper") == p and it.get("kind") == "number")
+        ledger["carry_over"] = report
+        print(f"carried over from the old ledger: {report['carried_items']} items, {report['links_remapped']} links remapped, "
+              f"{sum(len(u['lost_links']) for u in report['unmapped'])} links to re-link by hand")
+        for u in report["unmapped"]:
+            print(f"   {u['item']}: {', '.join(u['lost_links'])}  — {u['text']}")
     L.save_json(ledger, a.out)
-    print(f"ledger written: {a.out} ({len(ledger['items'])} items)")
+    print(f"ledger written: {a.out} ({len(ledger['items'])} items, number parser v{L.PARSER_VERSION})")
     return 0
 
 

@@ -19,7 +19,7 @@ return the student to the step that produces it (p4-03 / p4-04).
 
 ## STEP 1 — Scripted checks (per target)
 Re-run `shared/scripts/reconcile_ledger.py translation` on each .docx (the earlier reports may be stale) and
-`shared/scripts/check_glossary.py` on each target. Record the results in `translation_qa_register.json`
+`shared/scripts/check_glossary.py` on each target. If `reconcile_ledger.py` stops with exit code 2 (ledger built by an older number parser), apply the *Ledger parser version* rule of `cross-cutting-contracts.md` (rebuild with `--carry-over`), then re-run. Record the results in `translation_qa_register.json`
 (`shared/schemas.md`): ledger numbers matched / missing / under-represented / introduced, table mismatches,
 non-verbatim references, citation-count mismatches, terminology inconsistencies.
 

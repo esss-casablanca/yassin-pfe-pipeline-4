@@ -42,7 +42,7 @@ For each paper: `shared/scripts/build_docx_from_md.py --md <paper>_EN.md --lang 
 then `shared/scripts/reconcile_ledger.py translation --ledger fidelity_ledger.json --paper <review|empirical>
 --target <paper>_EN.docx --locale en --out recon_<paper>_EN.json`. Fix every missing, under-represented or
 introduced number, every table mismatch, every non-verbatim reference and every citation-count mismatch
-**in the .md**, rebuild, re-run — until the script reports no Major finding. Then read each target once more
+**in the .md**, rebuild, re-run — until the script reports no Major finding. If `reconcile_ledger.py` stops with exit code 2 (ledger built by an older number parser), apply the *Ledger parser version* rule of `cross-cutting-contracts.md` (rebuild with `--carry-over`), then re-run. Then read each target once more
 against the claim register. Open each .docx once (render or preview) and check the title block, headings,
 tables and the reference list.
 

@@ -41,7 +41,7 @@ deviation register sentences kept honest; the Methods transcribe the protocol as
 For each paper: `shared/scripts/build_docx_from_md.py --md <paper>_AR.md --lang ar --out <paper>_AR.docx`, then
 `shared/scripts/reconcile_ledger.py translation --ledger fidelity_ledger.json --paper <review|empirical>
 --target <paper>_AR.docx --locale ar --out recon_<paper>_AR.json`. Fix every finding in the .md, rebuild,
-re-run until no Major finding remains. Then read each target against the claim register. Open each .docx
+re-run until no Major finding remains. If `reconcile_ledger.py` stops with exit code 2 (ledger built by an older number parser), apply the *Ledger parser version* rule of `cross-cutting-contracts.md` (rebuild with `--carry-over`), then re-run. Then read each target against the claim register. Open each .docx
 (render or preview) and check: right-to-left flow, **right alignment of every paragraph** (only the title block
 and the figure captions are centred; nothing is justified), headings, the RTL tables (first column on the
 right, cells right-aligned), Latin blocks and acronyms, the reference list right-aligned with its Latin entries

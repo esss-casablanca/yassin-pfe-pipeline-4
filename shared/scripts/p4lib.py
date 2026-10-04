@@ -6,6 +6,16 @@ Number normalisation is locale-aware:
   en : thousands separated by commas, decimal point                      -> "1,248" "12.5"
   ar : ASCII digits by Pipeline-4 contract, decimal point; Arabic-Indic digits are mapped to ASCII first
 A normalised number is a plain string such as "1248", "12.5", "-0.03".
+
+Parser version 2 (plugin v0.2.4) — fixes reported on 2026-10-04 (D15-P04):
+  * thousands separators: en/ar also accept no-break / narrow / thin spaces and the Arabic separator U+066C;
+    the Arabic decimal separator U+066B is read as a decimal point;
+  * bracketed intervals ("IC 95 % [1,3 ; 3,4]", "28 [24–33]") are read as numbers, no longer as citation keys;
+  * DOIs and URLs in the running text are ignored;
+  * section cross-references ("2.3", "§ 2.3", "القسم 2.3", "2.3.1") are read identically in every locale
+    (French accepts a decimal point as a fallback, multi-level numbers are ignored, Arabic section words are labels);
+  * a French label followed by a grouped number ("tableau 3 120 femmes") is split into the label and the value.
+A ledger built with an older parser must be rebuilt (extract_ledger.py --carry-over) before reconciliation.
 """
 from __future__ import annotations
 
@@ -16,7 +26,11 @@ import unicodedata
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
-GROUP_SPACES = "     "  # nbsp, narrow nbsp, thin space, figure space, space
+PARSER_VERSION = "2"  # bump whenever find_numbers / find_citations change what they return
+
+GROUP_SPACES = "\u00a0\u202f\u2009\u2007 "  # nbsp, narrow nbsp, thin space, figure space, space
+EN_GROUP = ",\u00a0\u202f\u2009\u2007\u066c"  # comma, no-break spaces, Arabic thousands separator (not the plain space)
+AR_DECIMAL = "\u066b"  # Arabic decimal separator
 ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 DASHES = "–—−-"  # en dash, em dash, minus, hyphen
 
@@ -60,13 +74,15 @@ class NumberHit:
 
 def _fr_pattern() -> re.Pattern:
     sp = f"[{GROUP_SPACES}]"
+    # decimal comma (French) or, as a fallback, decimal point: "2.3" must read the same in every locale
     return re.compile(
-        rf"(?<![\w.,])[-−]?(?:\d{{1,3}}(?:{sp}\d{{3}})+|\d+)(?:,\d+)?(?![\w])"
+        rf"(?<![\w.,])[-−]?(?:\d{{1,3}}(?:{sp}\d{{3}})+|\d+)(?:[,.]\d+)?(?![\w])"
     )
 
 
 def _en_pattern() -> re.Pattern:
-    return re.compile(r"(?<![\w.,])[-−]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?![\w])")
+    g = f"[{EN_GROUP}]"
+    return re.compile(rf"(?<![\w.,])[-−]?(?:\d{{1,3}}(?:{g}\d{{3}})+|\d+)(?:[.{AR_DECIMAL}]\d+)?(?![\w])")
 
 
 def normalize_number(raw: str, locale: str) -> str:
@@ -76,7 +92,9 @@ def normalize_number(raw: str, locale: str) -> str:
             s = s.replace(ch, "")
         s = s.replace(",", ".")
     else:  # en / ar
-        s = s.replace(",", "")
+        for ch in EN_GROUP:
+            s = s.replace(ch, "")
+        s = s.replace(AR_DECIMAL, ".")
     # canonical string: no leading zeros on the integer part; written precision kept (12.50 stays 12.50)
     neg = s.startswith("-")
     s = s.lstrip("-")
@@ -88,35 +106,108 @@ def normalize_number(raw: str, locale: str) -> str:
     return ("-" if neg else "") + s
 
 
+# ---- things that look like numbers but are not values of the paper -----------------------------------------
+URL_DOI = re.compile(r"(?i)(?:https?://|www\.)\S+|\bdoi\s*:\s*\S+|\b10\.\d{4,9}/[^\s\"<>]+")
+MULTI_DOT = re.compile(r"(?<![\w.,])\d+(?:\.\d+){2,}(?![\w])")  # 2.3.1 — section / item numbering
+LABEL_BEFORE = re.compile(
+    r"(?i)(tableau|table|figure|fig\.|الجدول|الشكل|جدول|شكل|composante|component|étape|step|phase|partie|part|"
+    r"section|chapitre|chapter|annexe|appendix|objectif|objective|hypoth[èe]se|hypothesis|paragraphe|paragraph|§|"
+    r"المكو[نّ]+|الملحق|المرحلة|القسم|الفصل|الجزء|الفقرة|البند|الباب)\s*$")
+
+# ---- bracketed intervals versus numeric citation keys ---------------------------------------------------------
+_STAT_ACRONYMS = re.compile(r"(?:\b(?:IC|CI|OR|aOR|ORa|ORaj|RR|aRR|RRa|HR|aHR|RP|PR|IRR|EIQ|IIQ|IQR)\b|95\s*%|±)")
+_STAT_WORDS = re.compile(r"(?i)(?:intervalle|interval|interquartile|étendue|\brange\b|m[ée]diane?\b|\bmin(?:imum)?\b|"
+                         r"\bmax(?:imum)?\b|فترة\s+الثقة|فاصل\s+الثقة|مجال\s+الثقة|المدى|الوسيط|نسبة\s+الأرجحية)")
+_NUMBER_JUST_BEFORE = re.compile(r"(?<![\w.,])(\d+(?:[,.]\d+)?)\s*%?\s*$")
+
+
+def _stat_context(before: str) -> bool:
+    """Statistical vocabulary in the 40 characters before a bracket, within the same clause."""
+    w = before[-40:]
+    for stop in ("]", ". ", "\n"):
+        k = w.rfind(stop)
+        if k >= 0:
+            w = w[k + len(stop):]
+    return bool(_STAT_ACRONYMS.search(w) or _STAT_WORDS.search(w))
+
+
+def bracket_is_interval(inner: str, before: str) -> bool:
+    """True when a bracket matched by CITATION_NUMERIC is a numeric interval (CI, IQR, range), not citation keys.
+
+    Citation keys are positive integers without leading zeros. An interval has two bounds: two decimal-comma
+    numbers ("1,3 ; 3,4", "0,8–1,9") or two integers in a statistical context ("médiane 28 [24–33]")."""
+    tokens = re.findall(r"\d+", inner)
+    if any(t.startswith("0") for t in tokens):          # [0,8–1,9] · [05] : never citation keys
+        return True
+    parts = [p for p in re.split(r"\s*[;–—-]\s*", inner.strip()) if p]
+    if len(parts) != 2:
+        return False
+    stat = _stat_context(before)
+    m = _NUMBER_JUST_BEFORE.search(before)
+    after_value = bool(m) and not re.fullmatch(r"(19|20)\d{2}", m.group(1))
+    dec = [re.fullmatch(r"\d+,\d+", p) for p in parts]
+    if all(dec):
+        sep = inner.strip()[len(parts[0]):].strip()[:1]
+        if sep == ";":                                    # [1,3 ; 3,4] : French CI typography
+            return True
+        return stat or after_value or any(len(p.split(",")[1]) >= 2 for p in parts)
+    if all(re.fullmatch(r"\d+", p) for p in parts):     # [24–33] : interval only with a statistical cue
+        return stat or after_value
+    return False
+
+
+def _citation_brackets(text: str):
+    """Yield the CITATION_NUMERIC matches that are citation keys (bracketed intervals are skipped)."""
+    for m in CITATION_NUMERIC.finditer(text):
+        if not bracket_is_interval(m.group(1), text[:m.start()]):
+            yield m
+
+
+def _blank(rx: re.Pattern, s: str) -> str:
+    return rx.sub(lambda m: " " * len(m.group(0)), s)
+
+
 def find_numbers(text: str, locale: str, strip_citations: bool = True) -> list[NumberHit]:
     """Return number hits in display order. Citation keys like [12] are blanked before extraction
-    when strip_citations is True so that reference indices are not mistaken for statistics."""
+    when strip_citations is True so that reference indices are not mistaken for statistics; bracketed
+    intervals ([1,3 ; 3,4]) are kept. DOIs, URLs and multi-level section numbers (2.3.1) are ignored."""
     text = nfc(text).translate(ARABIC_INDIC)
-    work = text
+    work = _blank(URL_DOI, text)
+    work = _blank(MULTI_DOT, work)
     if strip_citations:
-        work = CITATION_NUMERIC.sub(lambda m: " " * len(m.group(0)), work)
+        spans = [(m.start(), m.end()) for m in _citation_brackets(work)]
+        for a, b in reversed(spans):
+            work = work[:a] + " " * (b - a) + work[b:]
     pat = _fr_pattern() if locale == "fr" else _en_pattern()
     hits: list[NumberHit] = []
-    for m in pat.finditer(work):
-        raw = m.group(0)
+    pos = 0
+    while True:
+        m = pat.search(work, pos)
+        if not m:
+            break
+        start, end, raw = m.start(), m.end(), m.group(0)
+        before = work[max(0, start - 14): start]
+        if locale == "fr" and LABEL_BEFORE.search(before) and re.search(f"[{GROUP_SPACES}]", raw):
+            # "tableau 3 120 femmes": the label number is 3, the value 120 is read on the next pass
+            raw = re.match(r"[-−]?\d+", raw).group(0)
+            end = start + len(raw)
+        pos = end
         norm = normalize_number(raw, locale)
-        after = work[m.end(): m.end() + 4]
-        before = work[max(0, m.start() - 12): m.start()]
+        after = work[end: end + 4]
         unit = None
-        if re.match(rf"[{GROUP_SPACES}]?%", after):
+        if re.match(rf"[{GROUP_SPACES}]?[%٪]", after):
             unit = "%"
         role = None
         if re.fullmatch(r"(19|20)\d{2}", norm) and unit is None:
             role = "year"
-        if re.search(r"(?i)(tableau|table|figure|fig\.|الجدول|الشكل|جدول|شكل|composante|component|étape|step|phase|partie|part|"
-                     r"section|chapitre|chapter|annexe|appendix|objectif|objective|hypoth[èe]se|hypothesis|المكو[نّ]+|الملحق|المرحلة)\s*$", before):
+        if LABEL_BEFORE.search(before):
             role = "label_ref"
         elif re.search(r"(?i)\bp\s*[=<>≤≥]\s*$", before):
             role = "p_value"
         elif re.search(r"(?i)\bn\s*=\s*$", before):
             role = "n"
-        ctx = text[max(0, m.start() - 60): m.end() + 60].replace("\n", " ")
-        hits.append(NumberHit(raw=raw, normalized=norm, start=m.start(), end=m.end(), unit=unit, role_hint=role, context=ctx))
+        ctx = text[max(0, start - 60): end + 60].replace("\n", " ")
+        hits.append(NumberHit(raw=raw, normalized=norm, start=start, end=end, unit=unit, role_hint=role, context=ctx))
     return hits
 
 
@@ -150,7 +241,7 @@ def expand_numeric_keys(inner: str) -> list[str]:
 def find_citations(text: str) -> dict[str, int]:
     text = nfc(text)
     counts: dict[str, int] = {}
-    for m in CITATION_NUMERIC.finditer(text):
+    for m in _citation_brackets(text):
         for k in expand_numeric_keys(m.group(1)):
             key = f"[{k}]"
             counts[key] = counts.get(key, 0) + 1
@@ -212,6 +303,17 @@ def docx_text_blocks(path: str) -> list[dict]:
                 cells.append([nfc(c.text).strip() for c in row.cells])
             blocks.append({"kind": "table", "text": "\n".join("\t".join(r) for r in cells), "section": section, "cells": cells})
     return blocks
+
+
+def is_md_rule_row(row: list[str]) -> bool:
+    """True for a Markdown table rule line (|---|:--:|); an all-empty row is a real (empty) row."""
+    cells = [c for c in row if c]
+    return bool(cells) and all(re.fullmatch(r":?-{2,}:?", c) for c in cells)
+
+
+def nonempty_rows(rows: list[list[str]]) -> int:
+    """Number of table rows that carry at least one non-blank cell (spacer rows are not compared)."""
+    return sum(1 for r in rows if any(str(c).strip() for c in r))
 
 
 def docx_plain_text(path: str) -> str:

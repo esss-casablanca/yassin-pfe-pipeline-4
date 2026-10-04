@@ -14,7 +14,8 @@ Two modes:
           --locale fr --out recon_deck.json [--ignore 2025/2026]
       Reports: numbers on slides not in the ledger (introduced), per-slide detail, ledger coverage.
 
-Exit code 0 = no Major finding, 1 = Major findings present (missing/altered/introduced), 2 = usage error.
+Exit code 0 = no Major finding, 1 = Major findings present (missing/altered/introduced), 2 = usage error or a ledger
+built with an older number parser (rebuild it: extract_ledger.py ... --carry-over <old ledger>).
 Hedge words and claim strength are NOT checked here — the assistant does that against the claim register.
 """
 from __future__ import annotations
@@ -84,7 +85,7 @@ def md_blocks(src: str) -> list[dict]:
             rows = []
             while i < len(lines) and lines[i].lstrip().startswith("|"):
                 row = [c.strip() for c in lines[i].strip().strip("|").split("|")]
-                if not all(re.fullmatch(r":?-{2,}:?", c or "--") for c in row):
+                if not L.is_md_rule_row(row):  # empty rows are kept (v0.2.4)
                     rows.append(row)
                 i += 1
             blocks.append({"kind": "table", "cells": rows, "section": section,
@@ -154,7 +155,7 @@ def reconcile_translation(ledger: dict, paper: str, target: str, locale: str) ->
     tgt_hits = L.find_numbers(body_text, locale)  # body only: the reference list is checked verbatim below
     seen = set()
     for h in tgt_hits:
-        if h.normalized in ledger_all or h.normalized in seen:
+        if h.normalized in ledger_all or h.normalized in seen or h.role_hint in IGNORED_ROLES:
             continue
         seen.add(h.normalized)
         introduced.append({"normalized": h.normalized, "raw": h.raw, "context": h.context.strip()[:160]})
@@ -174,10 +175,13 @@ def reconcile_translation(ledger: dict, paper: str, target: str, locale: str) ->
                 src_nums_t[n] = src_nums_t.get(n, 0) + 1
             miss = {n: c - tgt_nums_t.get(n, 0) for n, c in src_nums_t.items() if tgt_nums_t.get(n, 0) < c}
             extra = {n: c - src_nums_t.get(n, 0) for n, c in tgt_nums_t.items() if src_nums_t.get(n, 0) < c}
+            rows_src = L.nonempty_rows(lt.get("cells") or []) if lt.get("cells") else lt["n_rows"]
+            rows_tgt = L.nonempty_rows(tables[k])
             table_report.append({"ledger_id": lt["id"], "label": lt["label"], "target_table_index": k + 1,
-                                 "rows_src": lt["n_rows"], "rows_tgt": len(tables[k]),
+                                 "rows_src": rows_src, "rows_tgt": rows_tgt,
+                                 "rows_src_incl_empty": lt["n_rows"], "rows_tgt_incl_empty": len(tables[k]),
                                  "missing_numbers": miss, "extra_numbers": extra,
-                                 "ok": not miss and not extra and lt["n_rows"] == len(tables[k])})
+                                 "ok": not miss and not extra and rows_src == rows_tgt})
         else:
             table_report.append({"ledger_id": lt["id"], "label": lt["label"], "target_table_index": None, "ok": False,
                                  "missing_numbers": "table absent", "extra_numbers": {}})
@@ -238,7 +242,7 @@ def reconcile_deck(ledger: dict, target: str, locale: str, ignore: list[str]) ->
         hits = L.find_numbers(s["text"], locale)
         intro_here = []
         for h in hits:
-            if h.normalized in ignore_set:
+            if h.normalized in ignore_set or h.role_hint in IGNORED_ROLES:
                 continue
             # tolerate small enumerations (1–9) used as list numbering / plan numbering on slides
             if re.fullmatch(r"[1-9]", h.normalized) and h.unit is None and h.role_hint is None:
@@ -282,6 +286,14 @@ def main() -> int:
     d.add_argument("--out", required=True)
     a = ap.parse_args()
     ledger = L.load_json(a.ledger)
+    pv = str(ledger.get("parser_version", "1"))
+    if pv != L.PARSER_VERSION:
+        print(f"STOP — {a.ledger} was built with number parser v{pv}; this script uses v{L.PARSER_VERSION} (plugin v0.2.4).\n"
+              f"Rebuild the ledger first, keeping the claim register:\n"
+              f"  python extract_ledger.py --project <code> --review <revue_FR.docx> --empirical <article_FR.docx> "
+              f"--out fidelity_ledger.json --text-dump _p4_text --carry-over <copy of the old fidelity_ledger.json>\n"
+              f"Puis relancez ce contrôle. / Reconstruisez le registre avec --carry-over, puis relancez ce contrôle.")
+        return 2
     if a.mode == "translation":
         rep = reconcile_translation(ledger, a.paper, a.target, a.locale)
         L.save_json(rep, a.out)

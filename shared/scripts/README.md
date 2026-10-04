@@ -15,8 +15,15 @@ All scripts run on the student's or supervisor's machine inside Cowork with Pyth
 | `check_glossary.py` | p4-05 | every glossary term present in the French source must appear in the target with its fixed equivalent (and its Latin acronym when so decided) |
 | `issue_attestation.py` | p4-05 | assembles `p4_attestation.json` (carrying the approval reference); refuses when the manifest has no valid approval, a reconciliation has a Major finding, a file changed after its check, a QA issue is open, or the soutenance lock is not locked |
 
-Exit codes of `reconcile_ledger.py`: 0 = no Major finding, 1 = Major findings. The JSON report is the record;
-the skill reads it and turns each finding into an issue-register entry.
+Exit codes of `reconcile_ledger.py`: 0 = no Major finding, 1 = Major findings, 2 = usage error **or a ledger built
+with an older number parser** (v0.2.3 or before). The JSON report is the record; the skill reads it and turns each
+finding into an issue-register entry.
+
+**Number parser v2 (v0.2.4).** `fidelity_ledger.json` carries `parser_version`. When `reconcile_ledger.py` stops with
+exit 2, rebuild the ledger without losing the claim register:
+`extract_ledger.py --project <code> --review <fr.docx> --empirical <fr.docx> --out fidelity_ledger.json --text-dump _p4_text --carry-over <copy of the old ledger>`.
+The `carry_over` block of the new ledger lists any claim link that could not be remapped: re-link it with the
+student before re-running the checks. Regression tests: `python tests/test_number_parser_v2.py`.
 
 What the scripts cannot judge: the **hedge and strength of claims** (the claim register is compared by the
 assistant), figure *images* (the assistant compares the figure's values with the ledger figure item), and the

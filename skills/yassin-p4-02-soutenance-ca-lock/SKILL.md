@@ -18,7 +18,7 @@ missing, return the student to **Yassin_P4_01_Soutenance_V1**. Confirm the soute
 jury, date) are still those in the manifest.
 
 ## STEP 1 — Appraise (eight dimensions, graded register)
-Follow `references/appraisal-grid.md`. Re-run `shared/scripts/reconcile_ledger.py deck` on the deck and read
+Follow `references/appraisal-grid.md`. Re-run `shared/scripts/reconcile_ledger.py deck` on the deck (exit code 2 = ledger built by an older number parser: apply the *Ledger parser version* rule of `cross-cutting-contracts.md`) and read
 `timing_V1.json`; then read every slide and every note. Record each finding in `soutenance_issue_register.json`
 (`shared/schemas.md`) with severity **Major** (blocks the lock: a number absent from the papers, a value changed,
 a hedge strengthened, a limitation dropped, an exploratory finding shown as confirmatory, a claim or citation

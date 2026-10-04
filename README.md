@@ -38,3 +38,24 @@ Entry is gated by **Dr Yassin's signed Pipeline-4 approval** (`APP-P4-KY-<year>/
 registry once the PFE submission is complete; verified by `shared/scripts/verify_approval.py`, recorded in the manifest, the
 profile, the lock and the attestation). All skills run only in Claude Cowork, **only on Claude Opus 5.5 or higher** (included in Claude Pro; Fable 5.1, Mythos and later
 releases also accepted; lower models are refused with a bilingual message), and speak as Dr Khaled Yassin.
+
+## Version 0.2.4 — number parser v2 (4 October 2026)
+
+Reported by a student (D15-P04) and reproduced on v0.2.3: `reconcile_ledger.py` raised false **Major** findings on
+faithful translations. Fixed in `shared/scripts/` (`p4lib.py`, `extract_ledger.py`, `reconcile_ledger.py`,
+`build_docx_from_md.py`):
+
+1. **Thousands separators** — English and Arabic also accept no-break / narrow / thin spaces and the Arabic
+   separator `٬`; the Arabic decimal separator `٫` is read as a decimal point.
+2. **Bracketed intervals** — `IC 95 % [1,30 ; 3,40]`, `1,85 [1,20–2,86]`, `médiane 28 [24–33]` are read as numbers,
+   not as citation keys. In v0.2.3 the French confidence intervals in brackets never entered the ledger (they were
+   counted as citations [1], [30]…), so neither the deck check nor the translation check saw them.
+3. **DOIs and URLs** in the running text are ignored.
+4. **Section cross-references** read the same in every locale (`voir 2.3` = `see 2.3`; `§`, `القسم`, `الفصل` are
+   labels; multi-level numbers such as `2.3.1` are ignored).
+5. **Empty table rows** are kept by the typesetter and not counted when tables are compared.
+
+Ledgers now carry `parser_version`. `reconcile_ledger.py` stops (exit 2) on a ledger built by an older parser:
+rebuild it with `extract_ledger.py … --carry-over <old ledger>`, which keeps the confirmed claim register and the
+hand-added numbers and remaps their links. Regression tests: `python shared/scripts/tests/test_number_parser_v2.py`
+(the bundled example still runs to an attestation unchanged).

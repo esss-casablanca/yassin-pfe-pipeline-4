@@ -211,7 +211,7 @@ def parse_md(src: str) -> tuple[dict, list[dict]]:
             rows = []
             while i < len(lines) and lines[i].lstrip().startswith("|"):
                 row = [c.strip() for c in lines[i].strip().strip("|").split("|")]
-                if not all(re.fullmatch(r":?-{2,}:?", c or "--") for c in row):
+                if not L.is_md_rule_row(row):  # empty rows are kept (v0.2.4)
                     rows.append(row)
                 i += 1
             blocks.append({"kind": "table", "rows": rows})

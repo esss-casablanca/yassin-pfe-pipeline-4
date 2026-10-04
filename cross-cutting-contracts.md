@@ -84,6 +84,12 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   secondary findings, limitations, conclusions — each with its direction and strength). Every later deliverable is
   reconciled against this ledger (skill 02 for the deck, skill 05 for the four translations); a ledger item that is
   missing, altered, moved to another claim, or newly introduced is a **Major** issue that blocks the lock.
+- **Ledger parser version** (v0.2.4): if `reconcile_ledger.py` stops with exit code 2 because the ledger was built
+  by an older number parser, rebuild it with `extract_ledger.py … --carry-over <copy of the old ledger>` (never by
+  hand), show the student the carry-over summary, re-link with the student any claim listed as unmapped, then re-run
+  every reconciliation of the current step. If the deck was already locked, re-run `reconcile_ledger.py deck` on the
+  locked deck with the rebuilt ledger: no introduced number → the lock stands; otherwise return to p4-02 for a re-lock.
+  A student never patches or replaces the school's scripts; a suspected script defect is reported to Dr Yassin.
 - **Frozen vs editable**: *frozen* — every ledger item, the direction and strength of every claim, hedging words
   that carry evidential weight ("may", "was associated with" ≠ "caused"), the reference list, the byline and the
   project title as deposited. *Editable* — wording, sentence structure, layout, slide design, selection and

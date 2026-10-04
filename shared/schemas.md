@@ -34,6 +34,7 @@ All files are UTF-8 JSON saved in the student's project workspace.
 ```json
 {
   "ledger_version": "1.0",
+  "parser_version": "2",
   "project_id": "D03-P01",
   "generated_at": "",
   "sources": {"review": {"file": "", "sha256": ""}, "empirical": {"file": "", "sha256": ""}},
@@ -61,6 +62,10 @@ thousands separator in a clearly integer context), convert decimal comma to deci
 percent as separate fields, keep ranges as two numbers linked by `range_of`. Years, section numbers, reference
 indices and citation keys are tagged (`role_hint`: `year`, `numbering`, `citation`) so the reconciler does not
 treat them as statistics but still checks their presence.
+Parser v2 (plugin v0.2.4): bracketed intervals (`[1,30 ; 3,40]`, `28 [24–33]` after a statistical cue) are numbers,
+not citation keys; DOIs/URLs and multi-level section numbers (`2.3.1`) are ignored; a ledger rebuilt with
+`--carry-over` adds `"carry_over": {"from_parser_version", "carried_items", "links_remapped", "unmapped": [...],
+"renamed_ids": {}}` and marks a claim whose link could not be remapped with `carry_over_unmapped_links`.
 
 ## soutenance_issue_register.json (p4-02)
 ```json
