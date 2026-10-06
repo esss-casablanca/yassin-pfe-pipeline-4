@@ -34,7 +34,7 @@ All files are UTF-8 JSON saved in the student's project workspace.
 ```json
 {
   "ledger_version": "1.0",
-  "parser_version": "2",
+  "parser_version": "3",
   "project_id": "D03-P01",
   "generated_at": "",
   "sources": {"review": {"file": "", "sha256": ""}, "empirical": {"file": "", "sha256": ""}},
@@ -65,7 +65,12 @@ treat them as statistics but still checks their presence.
 Parser v2 (plugin v0.2.4): bracketed intervals (`[1,30 ; 3,40]`, `28 [24–33]` after a statistical cue) are numbers,
 not citation keys; DOIs/URLs and multi-level section numbers (`2.3.1`) are ignored; a ledger rebuilt with
 `--carry-over` adds `"carry_over": {"from_parser_version", "carried_items", "links_remapped", "unmapped": [...],
-"renamed_ids": {}}` and marks a claim whose link could not be remapped with `carry_over_unmapped_links`.
+"renamed_ids": {}, "dropped_duplicates": [...]}` and marks a claim whose link could not be remapped with
+`carry_over_unmapped_links`.
+Parser v3 (plugin v0.2.6): a decimal-comma pair in brackets is an interval when it stands alone in a cell or line
+(`[52,5–79,5]`) or when its citation reading is not a well-formed ascending list; `dropped_duplicates` lists the
+hand-added numbers removed on rebuild because the parser now reads the same occurrence (`{"item", "replaced_by",
+"raw", "section", "extracted_by"}`); `spelled_out` numbers are never dropped.
 
 ## soutenance_issue_register.json (p4-02)
 ```json
