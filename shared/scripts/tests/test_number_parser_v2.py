@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Regression tests for the number parser v2 (plugin v0.2.4) and the mixed-language sources of v0.2.5.
+"""Regression tests for the number parser v2 (plugin v0.2.4), the mixed-language sources of v0.2.5 and the
+parser v3 / carry-over dedupe of v0.2.6.
 
     python shared/scripts/tests/test_number_parser_v2.py [--keep DIR]
 
@@ -60,6 +61,20 @@ def part_a() -> None:
     check("fr citation [12–15]", L.find_citations("plusieurs études [12–15]"), {"[12]": 1, "[13]": 1, "[14]": 1, "[15]": 1})
     check("fr citation after a year", L.find_citations("en 2019 [12–15]"), {"[12]": 1, "[13]": 1, "[14]": 1, "[15]": 1})
     check("fr citation not a number", nums("plusieurs études [12–15]", "fr"), [])
+    # 2b. parser v3 (v0.2.6, D15-P03): decimal-comma intervals alone in a table cell, and intervals whose
+    #     citation reading is not a well-formed list; true citation lists with ranges are unchanged
+    check("fr cell [52,5–79,5] alone", nums("[52,5–79,5]", "fr"), ["52.5", "79.5"])
+    check("fr cell [2,6–51,3] alone", nums("[2,6–51,3]", "fr"), ["2.6", "51.3"])
+    check("fr cell [1,2–3,4] alone", nums("[1,2–3,4]", "fr"), ["1.2", "3.4"])
+    check("fr [30,1–49,5] after plain words", nums("continuité adéquate [30,1–49,5]", "fr"), ["30.1", "49.5"])
+    check("fr [52,5–79,5] is not a citation", L.find_citations("[52,5–79,5]"), {})
+    check("fr [30,1–49,5] is not a citation", L.find_citations("continuité adéquate [30,1–49,5]"), {})
+    check("fr citation list with a range [1,3-5,7]", L.find_citations("comme rapporté [1,3-5,7]"),
+          {"[1]": 1, "[3]": 1, "[4]": 1, "[5]": 1, "[7]": 1})
+    check("fr citation [1,3-5,7] not a number", nums("comme rapporté [1,3-5,7]", "fr"), [])
+    check("plausible list 1,3-5,7", L.plausible_citation_list("1,3-5,7"), True)
+    check("not plausible 52,5–79,5", L.plausible_citation_list("52,5–79,5"), False)
+    check("not plausible 2,6–51,3 (span 45)", L.plausible_citation_list("2,6–51,3"), False)
     # 3. DOIs and URLs
     check("fr DOI url", nums("(https://doi.org/10.1186/s12884-021-03456-7)", "fr"), [])
     check("en DOI url", nums("(https://doi.org/10.1186/s12884-021-03456-7)", "en"), [])
@@ -88,6 +103,9 @@ FR_PARAS = [
     ("p", "Les données sont disponibles (https://doi.org/10.5281/zenodo.1234567) ; voir aussi [1,3]."),
     ("table", [["Variable", "n (%)", "OR [IC 95 %]"], ["Primipare", "412 (40,7)", "1,85 [1,20–2,86]"], ["", "", ""],
                ["Multipare", "600 (59,3)", "1"]]),
+    ("table", [["Quartier", "Continuité adéquate (%)", "IC 95 %"], ["Nord", "66,0", "[52,5–79,5]"],
+               ["Sud", "39,8", "[30,1–49,5]"], ["Est", "26,9", "[2,6–51,3]"]]),
+    ("p", "Tableau 2. Continuité adéquate par quartier."),
     ("p", "Tableau 1. Facteurs associés (n = 1 012)."),
     ("h", "Références"),
     ("p", "1. Cox JL, Holden JM, Sagovsky R. Detection of postnatal depression. Br J Psychiatry. 1987;150:782-6."),
@@ -111,6 +129,14 @@ Data are available (https://doi.org/10.5281/zenodo.1234567); see also [1,3].
 | Multiparous | 600 (59.3) | 1 |
 
 Table 1. Associated factors (n = 1,012).
+
+| District | Adequate continuity (%) | 95% CI |
+|---|---|---|
+| North | 66.0 | [52.5–79.5] |
+| South | 39.8 | [30.1–49.5] |
+| East | 26.9 | [2.6–51.3] |
+
+Table 2. Adequate continuity by district.
 
 # References
 
@@ -136,6 +162,14 @@ AR_MD = """# النتائج
 | متعددة الولادات | 600 (59.3) | 1 |
 
 الجدول 1. العوامل المرتبطة (n = 1٬012).
+
+| الحي | الاستمرارية الملائمة (%) | IC 95% |
+|---|---|---|
+| الشمال | 66.0 | [52.5–79.5] |
+| الجنوب | 39.8 | [30.1–49.5] |
+| الشرق | 26.9 | [2.6–51.3] |
+
+الجدول 2. الاستمرارية الملائمة حسب الحي.
 
 # المراجع
 
@@ -178,6 +212,9 @@ def part_b_c(work: str) -> None:
     check("ledger carries parser_version", led.get("parser_version"), L.PARSER_VERSION)
     led_nums = {it["normalized"] for it in led["items"] if it["kind"] == "number"}
     check("CI bounds are in the ledger", {"1.30", "3.40"} <= led_nums, True)
+    tbl_nums = {n for it in led["items"] if it["kind"] == "table" for n in it["numbers_normalized"]}
+    check("cell intervals [52,5–79,5] … are in the ledger (v3)", {"52.5", "79.5", "30.1", "49.5", "2.6", "51.3"} <= tbl_nums, True)
+    check("no phantom citation from a cell interval", any(it["kind"] == "citation" and it["key"] in ("[52]", "[79]", "[30]") for it in led["items"]), False)
     check("DOI digits are not in the ledger", "5281" in led_nums or "1234567" in led_nums, False)
     for lang in ("en", "ar"):
         check(f"build {lang}", run(s("build_docx_from_md.py"), "--md", f"article_{lang.upper()}.md", "--lang", lang,
@@ -199,7 +236,17 @@ def part_b_c(work: str) -> None:
              "text_fr": "Le faible soutien est associé à un score EPDS ≥ 12.", "direction": "positive",
              "strength": "confirmatory", "hedge": "est associé à", "linked_items": [num_ci, num_2_3],
              "extracted_by": "assistant", "student_confirmed": True}
-    old["items"] = led["items"] + [claim]
+    # v0.2.6: a CI bound added by hand under the old parser (same occurrence as the script item of 3.40) and a
+    # number written in words — the first must be dropped on rebuild, the second kept
+    ci_340 = next(it for it in led["items"] if it["kind"] == "number" and it["normalized"] == "3.40")
+    hand = {"id": "E-N-9001", "paper": "empirical", "kind": "number", "section": ci_340.get("section"), "raw": "3,40",
+            "normalized": "3.40", "unit": None, "role_hint": None, "context": ci_340.get("context"),
+            "extracted_by": "assistant (ledger 1.1 correction)"}
+    words = {"id": "E-N-9002", "paper": "empirical", "kind": "number", "section": "Résultats", "raw": "douze",
+             "normalized": "12", "unit": None, "role_hint": "spelled_out", "context": "score EPDS ≥ douze",
+             "extracted_by": "assistant"}
+    claim["linked_items"] = [num_ci, num_2_3, "E-N-9001"]
+    old["items"] = led["items"] + [claim, hand, words]
     L.save_json(old, "ledger_old.json")
     rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "ledger_old.json", "--paper", "empirical",
              "--target", "article_EN.docx", "--locale", "en", "--out", "recon_old.json")
@@ -210,8 +257,14 @@ def part_b_c(work: str) -> None:
     kept = [it for it in new["items"] if it["kind"] == "claim"]
     check("claim kept", [it["id"] for it in kept], ["E-CL-0001"])
     ids = {it["id"]: it for it in new["items"]}
-    check("claim links resolve to the same values", sorted(ids[x]["normalized"] for x in kept[0]["linked_items"]), ["1.30", "2.3"])
+    check("claim links resolve to the same values", sorted(ids[x]["normalized"] for x in kept[0]["linked_items"]), ["1.30", "2.3", "3.40"])
     check("summary counts the claim", new["summary"]["empirical"]["claims"], 1)
+    check("hand-added duplicate dropped (v0.2.6)", "E-N-9001" in ids, False)
+    check("dropped duplicate reported", [(d["item"], d["replaced_by"]) for d in new["carry_over"]["dropped_duplicates"]],
+          [("E-N-9001", ci_340["id"])])
+    check("claim link follows the script item", ci_340["id"] in kept[0]["linked_items"], True)
+    check("spelled-out number kept", "E-N-9002" in ids and ids["E-N-9002"]["role_hint"] == "spelled_out", True)
+    check("3.40 expected once, not twice", sum(1 for it in new["items"] if it["kind"] == "number" and it["normalized"] == "3.40"), 1)
 
 
 EN_FR_SRC = [
