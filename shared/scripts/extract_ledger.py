@@ -24,6 +24,10 @@ with the student: every item of the old ledger that was not extracted by the scr
 numbers written in words) is kept, and its links to script items are remapped to the new ids. Links that cannot be
 remapped are listed in the item (carry_over_unmapped_links) and in the ledger's carry_over report: re-link them by
 hand with the student before going on.
+Since v0.2.6 a number the assistant had added by hand because the old parser missed it (e.g. a CI bound inside
+brackets) is dropped when the new parser reads that same occurrence itself: the ledger would otherwise expect the
+value twice. Dropped items and the script id that replaces them are listed in carry_over.dropped_duplicates; links
+that pointed to them follow. Numbers written in words (role_hint "spelled_out") are never dropped.
 """
 from __future__ import annotations
 
@@ -214,12 +218,44 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
             return simple_new.get((o["paper"], "reference", o["index"]))
         return None
 
+    # v0.2.6 — an assistant-added number that the new parser now reads itself is a duplicate: the same occurrence
+    # (same paragraph, or the same context window) with the same normalised value. It is dropped and the links
+    # that pointed to it follow the script item. Numbers written in words stay: they are extra by design.
+    by_value: dict[tuple, list[dict]] = defaultdict(list)
+    for it in new_items:
+        if it["kind"] == "number":
+            by_value[(it["paper"], it["normalized"])].append(it)
+    dup_map: dict[str, str] = {}
+    dropped: list[dict] = []
+    survivors: list[dict] = []
+    for it in keep:
+        if it["kind"] != "number" or it.get("role_hint") == "spelled_out":
+            survivors.append(it)
+            continue
+        twin = None
+        for c in by_value.get((it["paper"], it.get("normalized")), []):
+            if c["id"] in dup_map.values():
+                continue
+            if it.get("paragraph_index") is not None and c.get("paragraph_index") == it["paragraph_index"]:
+                twin = c
+                break
+            if same_occurrence(it.get("context", ""), c.get("context", "")):
+                twin = c
+                break
+        if twin is None:
+            survivors.append(it)
+        else:
+            dup_map[it["id"]] = twin["id"]
+            dropped.append({"item": it["id"], "replaced_by": twin["id"], "raw": it.get("raw"),
+                            "section": it.get("section"), "extracted_by": it.get("extracted_by")})
+    keep = survivors
+
     remapped, unmapped = 0, []
     for it in keep:
         links = it.get("linked_items") or []
         new_links, lost = [], []
         for ln in links:
-            nid = map_id(ln)
+            nid = dup_map.get(ln) or map_id(ln)
             if nid:
                 new_links.append(nid)
                 remapped += nid != ln
@@ -247,8 +283,19 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
                 it["linked_items"] = [renamed.get(x, x) for x in it["linked_items"]]
 
     report = {"from_generated_at": old.get("generated_at"), "from_parser_version": str(old.get("parser_version", "1")),
-              "carried_items": len(keep), "links_remapped": remapped, "unmapped": unmapped, "renamed_ids": renamed}
+              "carried_items": len(keep), "links_remapped": remapped, "unmapped": unmapped, "renamed_ids": renamed,
+              "dropped_duplicates": dropped}
     return keep, report
+
+
+def same_occurrence(ctx_a: str, ctx_b: str, min_common: int = 24) -> bool:
+    """Two context windows describe the same place in the paper when they share a long run of text."""
+    a = re.sub(r"\s+", " ", ctx_a or "").strip()
+    b = re.sub(r"\s+", " ", ctx_b or "").strip()
+    if not a or not b:
+        return False
+    m = difflib.SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b))
+    return m.size >= min_common
 
 
 def main() -> int:
@@ -302,7 +349,10 @@ def main() -> int:
             ledger["summary"][p]["numbers"] += sum(1 for it in keep if it.get("paper") == p and it.get("kind") == "number")
         ledger["carry_over"] = report
         print(f"carried over from the old ledger: {report['carried_items']} items, {report['links_remapped']} links remapped, "
-              f"{sum(len(u['lost_links']) for u in report['unmapped'])} links to re-link by hand")
+              f"{sum(len(u['lost_links']) for u in report['unmapped'])} links to re-link by hand, "
+              f"{len(report['dropped_duplicates'])} hand-added numbers now read by the parser (dropped)")
+        for d in report["dropped_duplicates"]:
+            print(f"   dropped {d['item']} ({d['raw']}, {d['section']}) → {d['replaced_by']}")
         for u in report["unmapped"]:
             print(f"   {u['item']}: {', '.join(u['lost_links'])}  — {u['text']}")
     L.save_json(ledger, a.out)

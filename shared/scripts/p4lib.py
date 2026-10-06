@@ -26,7 +26,7 @@ import unicodedata
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
-PARSER_VERSION = "2"  # bump whenever find_numbers / find_citations change what they return
+PARSER_VERSION = "3"  # bump whenever find_numbers / find_citations change what they return
 
 GROUP_SPACES = "\u00a0\u202f\u2009\u2007 "  # nbsp, narrow nbsp, thin space, figure space, space
 EN_GROUP = ",\u00a0\u202f\u2009\u2007\u066c"  # comma, no-break spaces, Arabic thousands separator (not the plain space)
@@ -131,11 +131,37 @@ def _stat_context(before: str) -> bool:
     return bool(_STAT_ACRONYMS.search(w) or _STAT_WORDS.search(w))
 
 
+def plausible_citation_list(inner: str) -> bool:
+    """True when the bracket content reads as a well-formed numeric citation list: integer keys and ranges a–b
+    (a < b, span ≤ 20), strictly ascending, never repeated — "1,3-5,7" and "12–15" yes; "52,5–79,5" (52 then 5),
+    "2,6–51,3" (span 45) and "30,1–49,5" (30 then 1) no: those are decimal-comma intervals."""
+    last = 0
+    for part in re.split(r"\s*[,;]\s*", inner.strip()):
+        if not part:
+            return False
+        m = re.fullmatch(r"(\d{1,3})\s*[–—-]\s*(\d{1,3})", part)
+        if m:
+            a, b = int(m.group(1)), int(m.group(2))
+            if a >= b or b - a > 20:
+                return False
+        elif re.fullmatch(r"\d{1,3}", part):
+            a = b = int(part)
+        else:
+            return False
+        if a <= last:
+            return False
+        last = b
+    return True
+
+
 def bracket_is_interval(inner: str, before: str) -> bool:
     """True when a bracket matched by CITATION_NUMERIC is a numeric interval (CI, IQR, range), not citation keys.
 
     Citation keys are positive integers without leading zeros. An interval has two bounds: two decimal-comma
-    numbers ("1,3 ; 3,4", "0,8–1,9") or two integers in a statistical context ("médiane 28 [24–33]")."""
+    numbers ("1,3 ; 3,4", "0,8–1,9", "52,5–79,5") or two integers in a statistical context ("médiane 28 [24–33]").
+    Parser v3: a decimal-comma pair is an interval when it stands alone (a table cell, the start of a line) or
+    when its citation reading is not a well-formed list (see plausible_citation_list); the stat-context, value-
+    before and two-decimal cues of v2 still apply."""
     tokens = re.findall(r"\d+", inner)
     if any(t.startswith("0") for t in tokens):          # [0,8–1,9] · [05] : never citation keys
         return True
@@ -145,14 +171,17 @@ def bracket_is_interval(inner: str, before: str) -> bool:
     stat = _stat_context(before)
     m = _NUMBER_JUST_BEFORE.search(before)
     after_value = bool(m) and not re.fullmatch(r"(19|20)\d{2}", m.group(1))
+    standalone = not before.strip()                      # the bracket is the whole cell or opens the line
     dec = [re.fullmatch(r"\d+,\d+", p) for p in parts]
     if all(dec):
         sep = inner.strip()[len(parts[0]):].strip()[:1]
         if sep == ";":                                    # [1,3 ; 3,4] : French CI typography
             return True
-        return stat or after_value or any(len(p.split(",")[1]) >= 2 for p in parts)
+        if stat or after_value or standalone or not plausible_citation_list(inner):
+            return True
+        return any(len(p.split(",")[1]) >= 2 for p in parts)
     if all(re.fullmatch(r"\d+", p) for p in parts):     # [24–33] : interval only with a statistical cue
-        return stat or after_value
+        return stat or after_value or not plausible_citation_list(inner)
     return False
 
 

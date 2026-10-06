@@ -25,6 +25,12 @@ exit 2, rebuild the ledger without losing the claim register:
 The `carry_over` block of the new ledger lists any claim link that could not be remapped: re-link it with the
 student before re-running the checks. Regression tests: `python tests/test_number_parser_v2.py`.
 
+**Number parser v3 (v0.2.6).** A decimal-comma interval standing alone in a table cell (`[52,5–79,5]`) or whose
+citation reading is not a well-formed list is read as two numbers, never as citation keys. On `--carry-over`, a
+number the assistant had added by hand that the new parser now reads itself is dropped (listed in
+`carry_over.dropped_duplicates`, links redirected); `spelled_out` numbers are kept. Ledgers of parser v1 or v2 are
+refused with exit 2 and rebuilt with `--carry-over`.
+
 What the scripts cannot judge: the **hedge and strength of claims** (the claim register is compared by the
 assistant), figure *images* (the assistant compares the figure's values with the ledger figure item), and the
 visual rendering in Word/PowerPoint (always open the file once before sign-off — Arabic bidi punctuation can
