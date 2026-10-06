@@ -90,3 +90,54 @@ two false-positive sources in the scripts, both fixed in `shared/scripts/` (`p4l
 `parser_version` is now `3`: a ledger built by v0.2.4 or v0.2.5 is refused by `reconcile_ledger.py` (exit 2) and is
 rebuilt with `--carry-over`, as before. Regression tests extended (`tests/test_number_parser_v2.py`, parts A–D); the
 new fixtures fail on v0.2.5 and pass on v0.2.6.
+
+## Version 0.2.7 — parser v4: the reference list, Word's hidden structures, dates, citations (6 October 2026)
+
+Reported by a student (D10-P01) and confirmed by reproduction, then checked on the 126 French papers deposited to date
+(every change class inspected by hand, old parser against new) and by an *identity round trip* on each of them
+(source → ledger → Markdown → Word → `reconcile_ledger.py`: 125/126 with no Major finding, the last one a number
+the student had broken over a line break inside a table cell). Scripts changed: `p4lib.py`, `extract_ledger.py`,
+`reconcile_ledger.py`, `build_docx_from_md.py`, `check_glossary.py`.
+
+1. **The reference list** (SD-1 class). One walker (`walk_blocks`) now serves the ledger, the reconciliation and the
+   glossary check. The list opens at any "Références / References / Bibliographie / المراجع"-type heading — styled,
+   bold, or typed as a plain line, with a section number or a parenthesis after it — and closes at the next heading,
+   at a table, or at the first paragraph that is not an entry (an "Annexe A" title, "Remerciements", "Financement",
+   "Matériel supplémentaire", a caption, typed without a heading style). A note before or inside the list ("Note du
+   traducteur : …", "Références conservées …") is body text. An entry wrapped over two paragraphs, or a whole list
+   typed in one paragraph with soft line breaks, is read entry by entry; entries typed with hand bullets (•, -, or a
+   Symbol-font glyph) or sub-indexed ("[5b]") are read; APA ("de Moissac, D., &"), Vancouver ("Soufi G,", "Vo V et
+   al. (2023)", "de Freitas BHBM,") and organisation ("WHO (2021).") openings are recognised, particles included.
+   Numbers inside the reference list are never statistics; nine deposited papers whose list was not found at all by
+   v0.2.6 are now read in full.
+2. **Word's hidden structures.** A bibliography inside a content control (Word's citation manager) is read; a table of
+   contents or list of figures is skipped; text boxes are read once (Word stores each twice); hyperlinks, inline
+   citation fields and tracked insertions are read, tracked deletions are not; a merged cell is read once; a
+   superscript number is a citation key (Vancouver superscript style: "stages.⁴˒⁵" → `[4,5]`, never after a unit).
+3. **Headings read the same way whatever their style.** A result or a caption typed in a heading style ("Cinq
+   dimensions présentent un α < 0,70 …", "Tableau 2. Résultats … (N = 50)") is a paragraph whose figures reach the
+   ledger; a heading that carries body text after a soft line break is split; a bold line with a figure is never a
+   heading. The same rule applies to the target built from Markdown, so the two sides agree.
+4. **Dates** are items of role `date` ("06/10/2025", "6 octobre 2025", "6 October 2025", "6 أكتوبر 2025", Moroccan
+   month names included): their day, month and year are not loose numbers, their format may change in translation,
+   and they are listed in `dates_to_verify_by_hand` (found in the target in any format, or to verify by eye) —
+   never a Major finding. `--ignore 2025/2026` excludes a title-block year.
+5. **Citations** are counted on body paragraphs *and* table cells on both sides (T-001 class); narrative author–date
+   citations ("Williams et al. (2023)", "Aiken & Clarke (2002)", "Williams وآخرون (2023)") are keys, normalised so
+   that "and / et / &" and "et al / وآخرون" compare equal. Citation mismatches stay informational.
+6. **Bidi controls** (U+202A–E, U+2066–9, zero-width spaces, BOM), soft hyphens and private-use glyphs are removed
+   before reading (SD-2 class): an Arabic citation typeset as one LTR unit ("‪[29–33]‬") reads as `[29–33]`;
+   `build_docx_from_md.py` embeds every bracketed key of an Arabic line as one LTR unit, with its opening bracket.
+7. **Arabic reading**: clitic prefixes (و، ب، ل، ك، ف) before a number, "وسيط"/"متوسط" statistical cues without the
+   article, ordinals (1er, 2e, 1st, 3rd) read as their number.
+8. **`check_glossary.py`** checks the body only (T-005 class): a term that appears solely in a reference title is not
+   a missing glossary term.
+9. **`--carry-over`** maps references by their text (the entries are split and indexed differently now) and numbers by
+   their context window when the paragraph numbering shifted; "2" is extended to "2.3" only, never to "25,8".
+
+`parser_version` is now `4`. A v3 ledger (v0.2.6) is still accepted by `reconcile_ledger.py` with a NOTE; it is
+rebuilt with `--carry-over` only when a reconciliation shows findings of the classes above (reference list, annex,
+dates, headings). Ledgers of parser v1/v2 are refused (exit 2) as before. Regression tests: parts E–G added to
+`tests/test_number_parser_v2.py` (every fixture fails on v0.2.6 and passes on v0.2.7); the bundled example runs to
+an attestation unchanged. Known limit: a number broken over a line break inside a table cell ("500⏎000") is read
+as two numbers — the assistant resolves the table finding by eye.

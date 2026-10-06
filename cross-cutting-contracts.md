@@ -93,6 +93,12 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   itself; show them to the student, nothing is to be re-added. An attestation already issued (p4-05) stays valid
   when the re-run's only findings are the ones a newer parser removes; a new attestation is issued only if the
   student or Dr Yassin asks for one.
+  Since v0.2.7 (parser v4) a v3 ledger is *accepted* with a NOTE, not refused: rebuild it with `--carry-over` only
+  when a reconciliation reports findings that the new parser explains — numbers or entries of the reference list,
+  an annex or a declaration read as references, a date read as loose numbers, a result typed in a heading style —
+  then re-run the reconciliations of the current step; a clean report under a v3 ledger needs nothing. A rebuilt
+  ledger maps references by text and numbers by context; a link listed as unmapped is re-linked with the student
+  (a link to a reference-list number or to a date fragment is simply dropped — it never carried evidence).
   A student never patches or replaces the school's scripts; a suspected script defect is reported to Dr Yassin.
 - **Frozen vs editable**: *frozen* — every ledger item, the direction and strength of every claim, hedging words
   that carry evidential weight ("may", "was associated with" ≠ "caused"), the reference list, the byline and the
