@@ -1,13 +1,23 @@
 {
   "name": "yassin-pfe-pipeline-4",
   "displayName": "Yassin ESSS PFE Pipeline 4 — Soutenance & Trilingual Papers",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Pipeline 4 of the ESSS PFE: from the two final, locked French papers to the soutenance deck (timed notes, jury-question bank) and the English and Arabic versions of both papers. Derivation only: a fidelity ledger keeps every number, table, citation and claim identical. Requires Dr Yassin's signed Pipeline-4 approval and Claude Opus 5.5 or higher.",
   "author": {
     "name": "Dr Khaled Yassin",
     "email": "kyassin174@gmail.com"
   },
   "license": "Proprietary",
-  "keywords": ["ESSS", "PFE", "soutenance", "presentation", "translation", "Arabic", "English", "fidelity", "cowork"],
+  "keywords": [
+    "ESSS",
+    "PFE",
+    "soutenance",
+    "presentation",
+    "translation",
+    "Arabic",
+    "English",
+    "fidelity",
+    "cowork"
+  ],
   "minimumModel": "claude-opus-5-5"
 }
