@@ -31,6 +31,18 @@ number the assistant had added by hand that the new parser now reads itself is d
 `carry_over.dropped_duplicates`, links redirected); `spelled_out` numbers are kept. Ledgers of parser v1 or v2 are
 refused with exit 2 and rebuilt with `--carry-over`.
 
+**Number parser v4 (v0.2.7).** The reference list is found and bounded by one shared walker (headings of any style,
+wrapped entries, soft line breaks, hand bullets, `[5b]`, APA/Vancouver/organisation openings; annexes, declarations
+and notes are body text); Word's content controls, text boxes, hyperlinks, citation fields and tracked changes are
+read as Word shows them, tables of contents skipped, merged cells read once, superscript numbers read as citation
+keys; a heading-styled result or caption is a paragraph (same rule on the target); dates are `date` items listed
+for the eye (`--ignore 2025/2026` for a title-block year); citations are counted on paragraphs and table cells on
+both sides and narrative author–date citations are keys; bidi controls and soft hyphens are stripped; Arabic
+clitics and ordinals are read; `check_glossary.py` ignores the reference list. A v3 ledger is accepted with a NOTE
+(rebuild with `--carry-over` only when the findings are of these classes); v1/v2 ledgers are refused with exit 2.
+The identity round trip used to validate the release (source → ledger → Markdown → Word → reconcile, no Major
+finding expected) is the recommended check after any later change to these scripts.
+
 What the scripts cannot judge: the **hedge and strength of claims** (the claim register is compared by the
 assistant), figure *images* (the assistant compares the figure's values with the ledger figure item), and the
 visual rendering in Word/PowerPoint (always open the file once before sign-off — Arabic bidi punctuation can

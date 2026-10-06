@@ -9,7 +9,8 @@ For every glossary entry whose French term occurs in the source, the target must
 term (or one of its listed "variants_<lang>") at least once; an entry present in the source but absent from the
 target is reported, with the count asymmetry, as a possible inconsistent rendering. Acronyms with
 keep_latin_acronym = true must appear in Latin letters in the target. The check is lexical (case-insensitive,
-whitespace-normalised, Arabic diacritics stripped); the assistant judges each report.
+whitespace-normalised, Arabic diacritics stripped); the assistant judges each report. The reference list of both
+documents is excluded from the count (v0.2.7).
 """
 from __future__ import annotations
 
@@ -56,8 +57,10 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     g = L.load_json(a.glossary)
-    src = L.docx_plain_text(a.source) if a.source.lower().endswith(".docx") else open(a.source, encoding="utf-8").read()
-    tgt = L.docx_plain_text(a.target) if a.target.lower().endswith(".docx") else open(a.target, encoding="utf-8").read()
+    # v0.2.7: the reference list is left out on both sides — a French title kept verbatim in a reference is not a
+    # rendering of the term (the .txt dump of extract_ledger has "## heading" lines and is read like Markdown)
+    src = L.split_body_and_refs(L.text_blocks(a.source))[0]
+    tgt = L.split_body_and_refs(L.text_blocks(a.target))[0]
     src_n, tgt_n = norm(src), norm(tgt)
     key = f"term_{a.lang}"
     report, checked, flagged = [], 0, 0

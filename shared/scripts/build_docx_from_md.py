@@ -160,11 +160,27 @@ def add_inline(p, text: str, lang: str, size_pt: float, base_bold=False, base_it
         elif tok.startswith("*") and tok.endswith("*"):
             tok, italic = tok[1:-1], True
         if lang == "ar":
-            for seg, ar in script_segments(tok):
-                if not ar and RANGE_IN_LATIN.search(seg):
-                    # a numeric range / ratio inside an RTL paragraph flips visually (1.10–1.83 → 1.83–1.10);
-                    # an explicit left-to-right embedding keeps it readable in Word and LibreOffice
-                    seg = "\u202a" + seg + "\u202c"
+            segs = [list(x) for x in script_segments(tok)]
+            for k, (seg, ar) in enumerate(segs):
+                if ar or not RANGE_IN_LATIN.search(seg):
+                    continue
+                # a numeric range / ratio inside an RTL paragraph flips visually (1.10–1.83 → 1.83–1.10);
+                # an explicit left-to-right embedding keeps it readable in Word and LibreOffice.
+                # v0.2.7: an opening bracket left on the Arabic side ("دراسات [" + "29–33]") moves into the
+                # embedding, so the citation reads "[29–33]" as one unit in Word and in the reconciler; the
+                # surrounding spaces stay outside it.
+                if k > 0 and segs[k - 1][1]:
+                    m = re.search(r"([\[(«{]\s*)$", segs[k - 1][0])
+                    if m:
+                        segs[k - 1][0] = segs[k - 1][0][: m.start()]
+                        seg = m.group(1) + seg
+                lead = len(seg) - len(seg.lstrip())
+                trail = len(seg) - len(seg.rstrip())
+                core = seg[lead: len(seg) - trail] if trail else seg[lead:]
+                segs[k][0] = seg[:lead] + "\u202a" + core + "\u202c" + (seg[len(seg) - trail:] if trail else "")
+            for seg, ar in segs:
+                if not seg:
+                    continue
                 run = p.add_run(seg)
                 set_run_props(run, rtl=ar, lang=lang, size_pt=size_pt, bold=bold, italic=italic)
         else:
@@ -288,9 +304,7 @@ def build(md_path: str, lang: str, out: str) -> dict:
             if b["level"] == 1 and b["text"] == title:
                 continue
             txt = b["text"]
-            in_refs = bool(L.HEADING_REFS.match(txt)) or txt.strip() == HEADING_WORDS[lang]["refs"]
-            if L.HEADING_ANNEX.match(txt):
-                in_refs = False
+            in_refs = L.is_refs_heading(txt) or txt.strip() == HEADING_WORDS[lang]["refs"]
             lvl = max(1, min(b["level"], 3))
             p = d.add_heading("", level=lvl)
             set_paragraph_bidi(p, rtl_doc)

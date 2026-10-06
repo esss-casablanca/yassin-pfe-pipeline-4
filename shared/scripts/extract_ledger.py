@@ -12,6 +12,9 @@ What it extracts, per paper (prefix R- for the review, E- for the empirical arti
   citations   R-C-0001 … every in-text citation key ([12] expanded from ranges; (Author, 2020)) with its count
   references  R-REF-0012 … every entry of the reference list, verbatim
 Claims (kind = "claim") are NOT extracted here: the assistant authors them with the student (see schemas.md).
+The reference list is the run of entries after a "Références"-type heading; it ends at the next heading, at a table
+or at the first paragraph that is not an entry (an "Annexe A" title typed without a heading style, v0.2.7).
+Citation keys are counted in the body paragraphs and in the table cells — the same basis as reconcile_ledger.py.
 
 --text-dump writes <paper>_blocks.json and <paper>.txt so the assistant can read the papers section by section.
 
@@ -52,34 +55,22 @@ def extract_paper(path: str, prefix: str, paper: str, locale: str) -> tuple[list
         counters[kind] += 1
         return f"{prefix}-{kind}-{counters[kind]:04d}"
 
-    in_refs = False
     ref_index = 0
+    ref_paragraphs: list[str] = []
     citation_counts: dict[str, int] = {}
     pending_table_label: str | None = None
     pending_table_caption: str | None = None
     para_index = 0
 
-    for i, b in enumerate(blocks):
+    for i, (b, in_refs) in enumerate(L.walk_blocks(blocks)):
         if b["kind"] == "heading":
-            in_refs = bool(L.HEADING_REFS.match(b["text"]))
-            if L.HEADING_ANNEX.match(b["text"]):
-                in_refs = False
             continue
 
         if b["kind"] == "paragraph":
             para_index += 1
             text = b["text"]
             if in_refs:
-                ref_index += 1
-                m = re.match(r"^\s*(?:\[?(\d{1,3})\]?[.)]?\s+)(.*)$", text, re.S)
-                idx = int(m.group(1)) if m else ref_index
-                body = (m.group(2) if m else text).strip()
-                doi = None
-                dm = re.search(r"10\.\d{4,9}/[^\s\"<>]+", body)
-                if dm:
-                    doi = dm.group(0).rstrip(".;,")
-                items.append({"id": nid("REF"), "paper": paper, "kind": "reference", "index": idx,
-                              "text": body, "doi": doi, "extracted_by": "script"})
+                ref_paragraphs.append(text)
                 continue
 
             # captions
@@ -129,6 +120,8 @@ def extract_paper(path: str, prefix: str, paper: str, locale: str) -> tuple[list
             for row in cells:
                 for cell in row:
                     nums.extend(h.normalized for h in L.find_numbers(cell, locale))
+                    for k, c in L.find_citations(cell).items():  # v0.2.7: citations in tables count on both sides
+                        citation_counts[k] = citation_counts.get(k, 0) + c
             items.append({"id": nid("T"), "paper": paper, "kind": "table", "label": label or f"(table sans légende #{counters['T'] + 1})",
                           "caption": caption, "section": b["section"], "n_rows": len(cells),
                           "n_cols": max((len(r) for r in cells), default=0),
@@ -136,6 +129,18 @@ def extract_paper(path: str, prefix: str, paper: str, locale: str) -> tuple[list
                           "extracted_by": "script"})
             pending_table_label = None
             pending_table_caption = None
+
+    # reference entries — an entry wrapped over two paragraphs is one entry (v0.2.7)
+    for text in L.merge_reference_fragments(ref_paragraphs):
+        ref_index += 1
+        typed, body = L.split_ref_index(text)
+        idx = typed if typed is not None else ref_index
+        doi = None
+        dm = re.search(r"10\.\d{4,9}/[^\s\"<>]+", body)
+        if dm:
+            doi = dm.group(0).rstrip(".;,")
+        items.append({"id": nid("REF"), "paper": paper, "kind": "reference", "index": idx,
+                      "text": body, "doi": doi, "extracted_by": "script"})
 
     for k in sorted(citation_counts, key=lambda s: (len(s), s)):
         items.append({"id": nid("C"), "paper": paper, "kind": "citation", "key": k,
@@ -155,11 +160,20 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
     by_para_raw: dict[tuple, list[str]] = defaultdict(list)
     by_para: dict[tuple, list[dict]] = defaultdict(list)
     tables_new: dict[str, list[dict]] = defaultdict(list)
+    refs_new: dict[str, list[dict]] = defaultdict(list)
     simple_new: dict[tuple, str] = {}
+    ref_taken: set[str] = set()
+    ref_cache: dict[str, str | None] = {}
+
+    def ref_key(t: str) -> str:
+        return re.sub(r"\s+", " ", L.split_ref_index(t)[1]).strip().lower()
+    by_raw: dict[tuple, list[dict]] = defaultdict(list)
+    num_taken: set[str] = set()
     for it in new_items:
         if it["kind"] == "number":
             by_para_raw[(it["paper"], it.get("paragraph_index"), it["raw"])].append(it["id"])
             by_para[(it["paper"], it.get("paragraph_index"))].append(it)
+            by_raw[(it["paper"], it["normalized"])].append(it)
         elif it["kind"] == "table":
             tables_new[it["paper"]].append(it)
         elif it["kind"] == "figure":
@@ -167,7 +181,8 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
         elif it["kind"] == "citation":
             simple_new[(it["paper"], "citation", it["key"])] = it["id"]
         elif it["kind"] == "reference":
-            simple_new[(it["paper"], "reference", it["index"])] = it["id"]
+            simple_new.setdefault((it["paper"], "reference", it["index"]), it["id"])
+            refs_new[it["paper"]].append(it)
 
     rank: dict[str, int] = {}
     seen: dict[tuple, int] = defaultdict(int)
@@ -200,11 +215,18 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
             same = [c for c in cands if c["normalized"] == o["normalized"]]
             if same:
                 return same[0]["id"]
-            if cands:  # e.g. "2" read from "2.3" by the old parser
+            if cands:  # e.g. "2" read from "2.3" by the old parser (never "2" → "25.8", v0.2.7)
                 best = max(cands, key=lambda c: difflib.SequenceMatcher(None, c.get("context", ""), o.get("context", "")).ratio()
-                           + (0.5 if c["normalized"].startswith(o["normalized"]) else 0))
-                if best["normalized"].startswith(o["normalized"]):
+                           + (0.5 if c["normalized"].startswith(o["normalized"] + ".") else 0))
+                if best["normalized"].startswith(o["normalized"] + "."):
                     return best["id"]
+            # v0.2.7 — the paragraph numbering shifts when the parser reads a document differently (a table of
+            # contents skipped, a heading split from its body text): the same value at the same place in the
+            # text, found by its context window, is the same item
+            for c in by_raw.get((o["paper"], o["normalized"]), []):
+                if c["id"] not in num_taken and same_occurrence(c.get("context", ""), o.get("context", "")):
+                    num_taken.add(c["id"])
+                    return c["id"]
             return None
         if k == "table":
             pos = old_table_pos.get(oid)
@@ -215,7 +237,27 @@ def carry_over(old: dict, new_items: list[dict]) -> tuple[list[dict], dict]:
         if k == "citation":
             return simple_new.get((o["paper"], "citation", o["key"]))
         if k == "reference":
-            return simple_new.get((o["paper"], "reference", o["index"]))
+            # v0.2.7 — by text first: the parser now splits, merges and indexes entries differently from v0.2.6
+            # (wrapped entries joined, "[5b]" read, hand bullets dropped), so the position alone could hand a
+            # verified status to the wrong entry. The typed index is only a tie-breaker between close texts.
+            if oid in ref_cache:              # several links may point at the same entry
+                return ref_cache[oid]
+            ok_ = ref_key(o.get("text", ""))
+            cands = [c for c in refs_new.get(o["paper"], []) if c["id"] not in ref_taken]
+            best, score = None, 0.0
+            for c in cands:
+                ck = ref_key(c.get("text", ""))
+                s = 1.0 if ck == ok_ else difflib.SequenceMatcher(None, ok_, ck).ratio()
+                if ck.startswith(ok_[:80]) or ok_.startswith(ck[:80]):
+                    s = max(s, 0.9)           # the old entry is the head of a now-merged entry, or the reverse
+                if s > score or (s == score and best is not None and c["index"] == o["index"]):
+                    best, score = c, s
+            if best is not None and score >= 0.8:
+                ref_taken.add(best["id"])
+                ref_cache[oid] = best["id"]
+                return best["id"]
+            ref_cache[oid] = None
+            return None
         return None
 
     # v0.2.6 — an assistant-added number that the new parser now reads itself is a duplicate: the same occurrence
@@ -330,9 +372,14 @@ def main() -> int:
             os.makedirs(a.text_dump, exist_ok=True)
             L.save_json(blocks, os.path.join(a.text_dump, f"{paper}_blocks.json"))
             with open(os.path.join(a.text_dump, f"{paper}.txt"), "w", encoding="utf-8") as f:
-                for b in blocks:
+                for b, in_refs in L.walk_blocks(blocks):
                     if b["kind"] == "heading":
                         f.write(f"\n## {b['text']}\n\n")
+                    elif in_refs and "\n" in b["text"]:
+                        # a list typed in one paragraph with soft line breaks: one entry per paragraph in the dump,
+                        # so the translation carries one entry per paragraph too (v0.2.7)
+                        for entry in L.merge_reference_fragments([b["text"]]):
+                            f.write(entry + "\n\n")
                     else:
                         f.write(b["text"] + "\n\n")
         print(f"{paper:9s} [{loc}] {os.path.basename(path)}: " + ", ".join(f"{k}={v}" for k, v in summary.items() if k != 'claims'))
