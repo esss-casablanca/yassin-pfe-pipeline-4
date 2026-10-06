@@ -34,7 +34,9 @@ beside the French (and the English for alignment), explain the choices, obtain t
 update `translation_progress.json`. Claims keep direction, strength and hedge (تشير إلى ≠ تُظهر).
 
 ## STEP 3 — Translate the empirical article
-Same rhythm for `empirical_article_AR.md`: STROBE vocabulary; exploratory findings carry "استكشافي"; the
+If the empirical source is in English (manifest `language: "en"`), translate from that English source — it is the
+official text; show each section beside the English, and use the glossary's EN column as the bridge. Otherwise,
+same rhythm for `empirical_article_AR.md`: STROBE vocabulary; exploratory findings carry "استكشافي"; the
 deviation register sentences kept honest; the Methods transcribe the protocol as the French does.
 
 ## STEP 4 — Typeset and reconcile

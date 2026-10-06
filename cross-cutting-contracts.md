@@ -126,6 +126,14 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   "OR = 1.42; IC 95 % : 1.10–1.83" → "OR = 1.42; 95% CI: 1.10–1.83" with the Arabic label "فاصل الثقة 95%" at
   first mention). Arabic is a **deliverable language in this pipeline only**; the earlier tracks' clause
   "Arabic is conversation-only" does not apply to skills 04 and 05.
+- **A source paper already in English** (v0.2.5; e.g. an empirical article the School accepted in English): the
+  deposited English paper is the official source of its component. The ledger is built with each paper's own language
+  (`extract_ledger.py --review-locale fr --empirical-locale en`); the manifest records `language: "en"` for that
+  source. The **English version** of that paper is the deposited file itself, registered unchanged (same SHA-256, no
+  retranslation, no rewording) and reconciled against the ledger with `--locale en` as a formality; the **Arabic
+  version** and the **French deck, notes and jury bank** are derived from the English source with the same fidelity
+  rules, the glossary serving as the FR/EN/AR bridge. Nothing in this rule allows translating the source into French
+  or altering it.
 - **Glossary first**: before any translation, skill 03 builds (and skills 04/05 extend) `glossary_fr_en_ar.json` —
   every technical term, instrument name, outcome label, statistical term and institutional name with its FR / EN /
   AR forms, a source for the equivalent when one exists (WHO terminology, the instrument's authorised translation,

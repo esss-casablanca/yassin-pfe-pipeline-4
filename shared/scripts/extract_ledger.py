@@ -3,7 +3,7 @@
 
 Usage:
   python extract_ledger.py --project D03-P01 --review revue_FINAL_FR.docx --empirical article_FINAL_FR.docx \
-      --out fidelity_ledger.json [--locale fr] [--text-dump DIR]
+      --out fidelity_ledger.json [--locale fr] [--review-locale fr] [--empirical-locale en] [--text-dump DIR]
 
 What it extracts, per paper (prefix R- for the review, E- for the empirical article):
   numbers     R-N-0001 … every number in the running text, with locale-aware normalisation, unit, role hint, context
@@ -14,6 +14,10 @@ What it extracts, per paper (prefix R- for the review, E- for the empirical arti
 Claims (kind = "claim") are NOT extracted here: the assistant authors them with the student (see schemas.md).
 
 --text-dump writes <paper>_blocks.json and <paper>.txt so the assistant can read the papers section by section.
+
+--review-locale / --empirical-locale (v0.2.5) override --locale for one paper: a review written in French and an
+empirical article deposited in English are read each with their own number conventions (decimal comma vs point,
+thousands separators). The locale of each source is recorded in the ledger's `sources` block.
 
 --carry-over OLD_LEDGER (v0.2.4) rebuilds a ledger made with an older number parser without losing the work done
 with the student: every item of the old ledger that was not extracted by the script (the confirmed claim register,
@@ -252,7 +256,9 @@ def main() -> int:
     ap.add_argument("--project", required=True)
     ap.add_argument("--review", help=".docx of the final French review article")
     ap.add_argument("--empirical", help=".docx of the final French empirical article")
-    ap.add_argument("--locale", default="fr", choices=["fr", "en", "ar"])
+    ap.add_argument("--locale", default="fr", choices=["fr", "en", "ar"], help="default language of both papers")
+    ap.add_argument("--review-locale", default=None, choices=["fr", "en", "ar"], help="language of the review article, if it differs")
+    ap.add_argument("--empirical-locale", default=None, choices=["fr", "en", "ar"], help="language of the empirical article, if it differs")
     ap.add_argument("--out", default="fidelity_ledger.json")
     ap.add_argument("--text-dump", help="directory to write <paper>_blocks.json and <paper>.txt")
     ap.add_argument("--carry-over", help="previous fidelity_ledger.json whose claim register (and other assistant items) must be kept")
@@ -264,11 +270,13 @@ def main() -> int:
     ledger = {"ledger_version": "1.0", "parser_version": L.PARSER_VERSION, "project_id": a.project,
               "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
               "sources": {}, "items": [], "summary": {}}
+    locales = {"review": a.review_locale or a.locale, "empirical": a.empirical_locale or a.locale}
     for paper, prefix, path in (("review", "R", a.review), ("empirical", "E", a.empirical)):
         if not path:
             continue
-        items, summary, blocks = extract_paper(path, prefix, paper, a.locale)
-        ledger["sources"][paper] = {"file": os.path.basename(path), "sha256": L.sha256_file(path), "locale": a.locale}
+        loc = locales[paper]
+        items, summary, blocks = extract_paper(path, prefix, paper, loc)
+        ledger["sources"][paper] = {"file": os.path.basename(path), "sha256": L.sha256_file(path), "locale": loc}
         ledger["items"].extend(items)
         ledger["summary"][paper] = summary
         if a.text_dump:
@@ -280,7 +288,7 @@ def main() -> int:
                         f.write(f"\n## {b['text']}\n\n")
                     else:
                         f.write(b["text"] + "\n\n")
-        print(f"{paper:9s} {os.path.basename(path)}: " + ", ".join(f"{k}={v}" for k, v in summary.items() if k != 'claims'))
+        print(f"{paper:9s} [{loc}] {os.path.basename(path)}: " + ", ".join(f"{k}={v}" for k, v in summary.items() if k != 'claims'))
     if old is not None:
         for paper, src in ledger["sources"].items():
             old_sha = (old.get("sources", {}).get(paper) or {}).get("sha256")

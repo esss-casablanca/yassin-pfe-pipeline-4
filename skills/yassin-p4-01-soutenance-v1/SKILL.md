@@ -42,6 +42,9 @@ default"` and the default 20 + 20 minutes, and say that this default must be con
 ## STEP 1 — Fidelity ledger
 Run `shared/scripts/extract_ledger.py --project <code> --review <fr.docx> --empirical <fr.docx>
 --out fidelity_ledger.json --text-dump _p4_text` and read the two papers section by section from the dump.
+If one source paper is in English (accepted as such by the School — see *A source paper already in English* in
+`cross-cutting-contracts.md`), add `--review-locale` / `--empirical-locale` so that each paper is read with its own
+number conventions, and record `language: "en"` for that source in the manifest.
 Then author the **claim register** with the student (`references/claim-register.md`): the title, each
 objective, each primary and secondary finding, each limitation and each conclusion as a `claim` item with its
 direction, strength (confirmatory / exploratory / descriptive / hypothesis) and the exact hedge used in the

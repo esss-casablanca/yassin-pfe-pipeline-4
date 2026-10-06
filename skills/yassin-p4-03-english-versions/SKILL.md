@@ -33,7 +33,11 @@ choices that mattered, obtain the student's confirmation, update `translation_pr
 their direction, strength and hedge (claim register open). PRISMA vocabulary in its official English form.
 
 ## STEP 3 — Translate the empirical article
-Same rhythm for `empirical_article_EN.md`: STROBE vocabulary; the deviation register sentences kept
+**If the manifest records the empirical source as `language: "en"`** (an article the School accepted in English),
+do not translate it: copy the deposited .docx unchanged as `empirical_article_EN.docx` (same SHA-256, recorded in
+`translation_progress.json` as `source_is_english: true`), run the reconciliation of STEP 4 on it (it must report
+zero finding) and go on. The same rule applies to a review deposited in English. Otherwise, same rhythm for
+`empirical_article_EN.md`: STROBE vocabulary; the deviation register sentences kept
 honest; exploratory findings labelled "exploratory"; the Methods transcribe the protocol exactly as the French
 does.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the number parser v2 (plugin v0.2.4).
+"""Regression tests for the number parser v2 (plugin v0.2.4) and the mixed-language sources of v0.2.5.
 
     python shared/scripts/tests/test_number_parser_v2.py [--keep DIR]
 
@@ -214,6 +214,40 @@ def part_b_c(work: str) -> None:
     check("summary counts the claim", new["summary"]["empirical"]["claims"], 1)
 
 
+EN_FR_SRC = [
+    ("h", "Results"),
+    ("p", "In total, 1,248 women were invited and 1,012 responded (81.1%); the adjusted OR was 2.10 (95% CI [1.30; 3.40])."),
+]
+
+
+def part_d(work: str) -> None:
+    """v0.2.5 — a French review and an English empirical article read each with its own locale."""
+    import docx
+    s = lambda n: os.path.join(SCRIPTS, n)  # noqa: E731
+    os.chdir(work)
+    d = docx.Document()
+    for kind, content in EN_FR_SRC:
+        (d.add_heading if kind == "h" else d.add_paragraph)(content, **({"level": 1} if kind == "h" else {}))
+    d.save("article_EN_source.docx")
+    print("D. mixed-language sources (--review-locale / --empirical-locale)")
+    check("extract fr review + en empirical", run(s("extract_ledger.py"), "--project", "D99-T02", "--review", "article_FR.docx",
+                                                   "--empirical", "article_EN_source.docx", "--review-locale", "fr",
+                                                   "--empirical-locale", "en", "--out", "ledger_mixed.json"), 0)
+    led = L.load_json("ledger_mixed.json")
+    check("source locales recorded", (led["sources"]["review"]["locale"], led["sources"]["empirical"]["locale"]), ("fr", "en"))
+    emp = {it["normalized"] for it in led["items"] if it["kind"] == "number" and it["paper"] == "empirical"}
+    check("English thousands read as one number", "1248" in emp and "1012" in emp, True)
+    check("English decimals kept", {"81.1", "2.10", "1.30", "3.40"} <= emp, True)
+    rev = {it["normalized"] for it in led["items"] if it["kind"] == "number" and it["paper"] == "review"}
+    check("French review still read in French", "1248" in rev, True)
+    # the English source registered unchanged as its own English version reconciles with zero finding
+    rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "ledger_mixed.json", "--paper", "empirical",
+             "--target", "article_EN_source.docx", "--locale", "en", "--out", "recon_self.json")
+    rep = L.load_json("recon_self.json")
+    check("English source reconciles with itself: exit 0", rc, 0)
+    check("English source reconciles with itself: nothing missing or introduced", (rep["ledger"]["missing"], rep["ledger"]["introduced"]), ([], []))
+
+
 def main() -> int:
     keep = None
     if "--keep" in sys.argv:
@@ -223,6 +257,7 @@ def main() -> int:
     os.makedirs(work, exist_ok=True)
     try:
         part_b_c(work)
+        part_d(work)
     finally:
         os.chdir(HERE)
         if not keep:

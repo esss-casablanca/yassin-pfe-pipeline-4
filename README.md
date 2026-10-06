@@ -59,3 +59,11 @@ Ledgers now carry `parser_version`. `reconcile_ledger.py` stops (exit 2) on a le
 rebuild it with `extract_ledger.py … --carry-over <old ledger>`, which keeps the confirmed claim register and the
 hand-added numbers and remaps their links. Regression tests: `python shared/scripts/tests/test_number_parser_v2.py`
 (the bundled example still runs to an attestation unchanged).
+
+## Version 0.2.5 — a source paper already in English (6 October 2026)
+
+Some empirical articles were accepted by the School in English. `extract_ledger.py` now takes
+`--review-locale` / `--empirical-locale` so each paper is read with its own number conventions, and the ledger records
+the locale of each source. Rule added to `cross-cutting-contracts.md` (Part C) and to p4-01 / p4-03 / p4-04: the
+deposited English paper is the official source of its component; its English version is the file itself, registered
+unchanged (same SHA-256); the Arabic version and the French deck are derived from it. Regression test extended.
