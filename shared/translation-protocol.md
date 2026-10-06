@@ -46,9 +46,12 @@ target convention. ASCII digits in Arabic (Pipeline-4 contract) — the typesett
 back to ASCII as a safeguard, but write ASCII from the start.
 
 ## 5. Citations and references
-In-text keys unchanged ([12], [3–5], (Smith et al., 2020)) in the same places. The reference list is pasted
-verbatim from `_p4_text/<paper>.txt` under the heading "References" / "المراجع" as a numbered list, one entry
-per line. The reconciler compares each entry to the source at ≥ 98.5 % similarity.
+In-text keys unchanged ([12], [3–5], (Smith et al., 2020), Williams et al. (2023)) in the same places; a source
+that cites with superscript numbers shows them as `[4,5]` in the dump — write them so. The reference list is pasted
+verbatim from `_p4_text/<paper>.txt` under the heading "References" / "المراجع", **one entry per paragraph** (the
+dump already gives one entry per paragraph, even when the source typed the list with soft line breaks); the
+annotation a student typed under an entry stays with that entry. The reconciler compares each entry to the source
+at ≥ 98.5 % similarity.
 
 ## 6. Claims and hedges
 Before translating a Results, Discussion or Conclusion paragraph, open the claim register for that section.

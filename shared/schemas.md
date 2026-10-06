@@ -71,6 +71,14 @@ Parser v3 (plugin v0.2.6): a decimal-comma pair in brackets is an interval when 
 (`[52,5–79,5]`) or when its citation reading is not a well-formed ascending list; `dropped_duplicates` lists the
 hand-added numbers removed on rebuild because the parser now reads the same occurrence (`{"item", "replaced_by",
 "raw", "section", "extracted_by"}`); `spelled_out` numbers are never dropped.
+Parser v4 (plugin v0.2.7): `role_hint` gains `date` (a numeric or month-name date, `normalized` = `d-m-yyyy`; its
+parts are not loose numbers; listed in `dates_to_verify_by_hand`, never Major) and `numbering` for a list number
+opening a paragraph (ignored by the reconciler); a superscript number is a `citation` key; narrative author–date
+citations are keys normalised as `(Surname & Surname, 2020)` / `(Surname et al., 2020)`. Reference items carry the
+typed index when there is one (`[5b]` → 5) or their rank; entries are read inside content controls, across wrapped
+paragraphs and soft line breaks, and behind hand bullets. The reconciliation report gains `ledger.dates_to_verify_by_hand`
+(`{"id", "raw", "normalized", "found_in_target", "in_target_only"?, "context"}`) and `ledger.ignored` (the
+`--ignore` values). `carry_over` maps references by text and numbers by context when the paragraph numbering shifted.
 
 ## soutenance_issue_register.json (p4-02)
 ```json
