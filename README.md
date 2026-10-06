@@ -67,3 +67,26 @@ Some empirical articles were accepted by the School in English. `extract_ledger.
 the locale of each source. Rule added to `cross-cutting-contracts.md` (Part C) and to p4-01 / p4-03 / p4-04: the
 deposited English paper is the official source of its component; its English version is the file itself, registered
 unchanged (same SHA-256); the Arabic version and the French deck are derived from it. Regression test extended.
+
+## Version 0.2.6 — number parser v3 and clean `--carry-over` (6 October 2026)
+
+Reported by a student (D15-P03) after re-running p4-05 on v0.2.4, with every value verified by hand as unchanged:
+two false-positive sources in the scripts, both fixed in `shared/scripts/` (`p4lib.py`, `extract_ledger.py`).
+
+1. **Decimal-comma intervals standing alone** — in a French table the interval often sits alone in its cell
+   (`[52,5–79,5]`, the "IC 95 %" cue being in the header cell). Parser v2 only accepted such a pair with a
+   statistical word or a value just before it, so these cells were read as citation keys ("52, 5–79, 5"): their
+   bounds never entered the ledger, the English/Arabic tables then showed "introduced" numbers and the deck slide
+   carrying the same table failed too. Parser v3 reads a decimal-comma pair as an interval when it stands alone
+   (a cell, the start of a line) or when its citation reading is not a well-formed list (keys strictly ascending,
+   ranges of at most 20 — `[1,3-5,7]` stays a citation, `[52,5–79,5]`, `[30,1–49,5]`, `[2,6–51,3]` are intervals).
+2. **Hand-added numbers counted twice after `--carry-over`** — a CI bound the assistant had added by hand because
+   parser v1 missed it was carried over *and* read again by the new parser, so the ledger expected it twice and the
+   translations were reported "under-represented". `--carry-over` now drops a hand-added number when the new parser
+   reads the same occurrence itself (same paragraph, or the same context window), lists it in
+   `carry_over.dropped_duplicates` and points the claim links to the script item. Numbers written in words
+   (`role_hint: "spelled_out"`) are never dropped.
+
+`parser_version` is now `3`: a ledger built by v0.2.4 or v0.2.5 is refused by `reconcile_ledger.py` (exit 2) and is
+rebuilt with `--carry-over`, as before. Regression tests extended (`tests/test_number_parser_v2.py`, parts A–D); the
+new fixtures fail on v0.2.5 and pass on v0.2.6.

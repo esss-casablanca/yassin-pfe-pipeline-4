@@ -89,6 +89,10 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   hand), show the student the carry-over summary, re-link with the student any claim listed as unmapped, then re-run
   every reconciliation of the current step. If the deck was already locked, re-run `reconcile_ledger.py deck` on the
   locked deck with the rebuilt ledger: no introduced number → the lock stands; otherwise return to p4-02 for a re-lock.
+  Since v0.2.6 the carry-over summary also lists `dropped_duplicates`: hand-added numbers the new parser reads
+  itself; show them to the student, nothing is to be re-added. An attestation already issued (p4-05) stays valid
+  when the re-run's only findings are the ones a newer parser removes; a new attestation is issued only if the
+  student or Dr Yassin asks for one.
   A student never patches or replaces the school's scripts; a suspected script defect is reported to Dr Yassin.
 - **Frozen vs editable**: *frozen* — every ledger item, the direction and strength of every claim, hedging words
   that carry evidential weight ("may", "was associated with" ≠ "caused"), the reference list, the byline and the
