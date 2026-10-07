@@ -79,6 +79,9 @@ typed index when there is one (`[5b]` → 5) or their rank; entries are read ins
 paragraphs and soft line breaks, and behind hand bullets. The reconciliation report gains `ledger.dates_to_verify_by_hand`
 (`{"id", "raw", "normalized", "found_in_target", "in_target_only"?, "context"}`) and `ledger.ignored` (the
 `--ignore` values). `carry_over` maps references by text and numbers by context when the paragraph numbering shifted.
+Parser v5 (plugin v0.2.8): a figure typed against a letter is read ("IC95%" → 95, "n45" → 45, "45ans" → 45, "D03-P04"
+→ 3 and 4) on both sides; "p = .05" reads 0.05; hexadecimal hashes and bare URLs are blanked; a numeric date is an
+item only when its day, month and year are plausible. v3/v4 ledgers accepted with a NOTE.
 
 ## soutenance_issue_register.json (p4-02)
 ```json
