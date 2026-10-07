@@ -141,3 +141,24 @@ dates, headings). Ledgers of parser v1/v2 are refused (exit 2) as before. Regres
 `tests/test_number_parser_v2.py` (every fixture fails on v0.2.6 and passes on v0.2.7); the bundled example runs to
 an attestation unchanged. Known limit: a number broken over a line break inside a table cell ("500⏎000") is read
 as two numbers — the assistant resolves the table finding by eye.
+
+## Version 0.2.8 — figures typed against letters (7 October 2026)
+
+Reported by a student (D03-P04) at p4-05: in the deposited review, table cells had lost their spaces ("IC95%",
+"n45", "p0,03", "45ans", "mixtes115", "etal.,2021Mondial"); parser v4 did not read a figure glued to a letter, the
+translation put the spaces back ("95% CI", "n = 45"), and every such figure was reported "introduced" — a Major
+finding with no value changed. The two sides now read the same figures whatever letter precedes or follows them
+(parser v5, `p4lib.py`): codes and identifiers are read too ("D03-P04" reads 3 and 4, "H1N1" 1 and 1) — they are
+copied as typed on both sides, so they compare equal. Still hidden: a digit or a decimal/section separator before
+the figure, a code letter or an item label after it ("6S", "14b", "8bis"), addresses; hexadecimal hashes and bare
+URLs ("consensus.app/…") are blanked like DOIs; "p = .05" / ",009" read 0.05 and 0.009; a catalogue number shaped
+like a date ("45-28-0001") is three numbers, not a date. The four lines a student types after the reference list
+(AI-use declaration, author contributions) were already body text since v0.2.7.
+
+A figure broken over a line break at a thousands boundary inside a table cell ("1⏎588", "500⏎000+") is read as
+one figure (the known limit of v0.2.7 is closed). `parser_version` is now `5`; v3 and v4 ledgers are accepted with
+a NOTE and rebuilt with `--carry-over` only when the findings are of the classes the NOTE lists. Regression tests:
+part H (a French source typed without spaces reconciled against its spaced English translation with no finding).
+Checked on the 126 deposited papers: identity round trip 126/126 with no Major finding, and the reporting
+student's two papers reconciled against a copy with the spaces put back (author-year, units, counts, "IC95%")
+with no finding.

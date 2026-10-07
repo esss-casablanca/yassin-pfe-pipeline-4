@@ -95,7 +95,8 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   student or Dr Yassin asks for one.
   Since v0.2.7 (parser v4) a v3 ledger is *accepted* with a NOTE, not refused: rebuild it with `--carry-over` only
   when a reconciliation reports findings that the new parser explains — numbers or entries of the reference list,
-  an annex or a declaration read as references, a date read as loose numbers, a result typed in a heading style —
+  an annex or a declaration read as references, a date read as loose numbers, a result typed in a heading style,
+  figures "introduced" in a translation because the source types them against letters ("IC95%", "n45" — v0.2.8) —
   then re-run the reconciliations of the current step; a clean report under a v3 ledger needs nothing. A rebuilt
   ledger maps references by text and numbers by context; a link listed as unmapped is re-linked with the student
   (a link to a reference-list number or to a date fragment is simply dropped — it never carried evidence).
