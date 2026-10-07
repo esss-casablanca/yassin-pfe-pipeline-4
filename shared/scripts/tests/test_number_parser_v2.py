@@ -745,6 +745,71 @@ def part_g(work: str) -> None:
     check("… nor in an indexed list (index out of sequence)", len(L.merge_reference_fragments(idx)), 2)
 
 
+H_EN_MD = """# Deposited tables, typed without spaces
+
+## Results
+
+The response rate was 78.8% (n = 45; 95% CI [70.1–85.2]); the median age was 45 years and the OR was 2.1
+(p = .03). Scale score (COSMIN1) and the H1N1 season are reported; project D03-P04; CI 95%: 1.2–3.4.
+Catalogue no 45-28-0001. See consensus.app/results?q=nurses (12 studies). Hash
+3b2c4f9e8d7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d.
+
+| Group | n (%) | 95% CI |
+| --- | --- | --- |
+| Mixed, 115 | 45 (30.0%) | [1.2–3.4] |
+
+## References
+
+1. Ajam A, et al. Patient satisfaction. J Radiol. 2017;12(3):441-9.
+"""
+
+
+def part_h(work: str) -> None:
+    """v0.2.8 — figures typed against letters in the deposited paper ("IC95%", "n45", "p0,03", "45ans", "mixtes115")
+    read the same as in the translation where the spaces are back; leading decimals, hashes, bare URLs, catalogue
+    numbers that look like dates."""
+    import docx
+    s = lambda n: os.path.join(SCRIPTS, n)  # noqa: E731
+    os.chdir(work)
+    print("H. v0.2.8 — digits glued to letters, leading decimals, hashes, bare URLs, catalogue numbers")
+    for text, want in [("IC95%", ["95"]), ("n45", ["45"]), ("p0,03", ["0.03"]), ("45ans", ["45"]), ("mixtes115", ["115"]),
+                       ("OR2,1", ["2.1"]), ("etal.,2021Mondial", ["2021"]), ("D03-P04", ["3", "4"]), ("p = ,009", ["0.009"]),
+                       ("p=.05", ["0.05"]), ("14b", []), ("Tableau 8bis", []), ("6S", ["6"]), ("2023PRFI", ["2023"]),
+                       ("Composante 2D03-P04", ["2", "3", "4"]), ("dbali45@gmail.com", []),
+                       ("2,5", ["2.5"]), ("2.3.1 Méthodes", []), ("pre-2015", ["2015"]), ("45-28-0001", ["45", "28", "1"]),
+                       ("06/10/2025", ["6-10-2025"]), ("consensus.app/results?q=x 12", ["12"]),
+                       ("3b2c4f9e8d7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d", [])]:
+        check(f"fr reads {text!r} as {want}", [h.normalized for h in L.find_numbers(text, "fr")], want)
+    check("ar: Latin letters do not hide a number either", [h.normalized for h in L.find_numbers("IC95% و78,8 %", "ar")], ["95", "78"])
+    d = docx.Document()
+    d.add_heading("Tableaux déposés, tapés sans espaces", level=1)
+    d.add_heading("Résultats", level=1)
+    d.add_paragraph("Le taux de réponse était de 78,8 % (n45 ; IC95% [70,1–85,2]) ; l’âge médian était de 45ans et l’OR de 2,1 "
+                    "(p=,03). Le score (COSMIN1) et la saison H1N1 sont rapportés ; projet D03-P04 ; IC95%: 1,2–3,4. "
+                    "Catalogue no 45-28-0001. Voir consensus.app/results?q=nurses (12études). Empreinte "
+                    "3b2c4f9e8d7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d.")
+    t = d.add_table(rows=2, cols=3)
+    t.cell(0, 0).text = "Groupe"; t.cell(0, 1).text = "n(%)"; t.cell(0, 2).text = "IC95%"
+    t.cell(1, 0).text = "Mixtes115"; t.cell(1, 1).text = "45(30,0%)"; t.cell(1, 2).text = "[1,2–3,4]"
+    d.add_heading("Références", level=1)
+    d.add_paragraph("1. Ajam A, et al. Patient satisfaction. J Radiol. 2017;12(3):441-9.")
+    d.save("h_source.docx")
+    check("extract", run(s("extract_ledger.py"), "--project", "D99-T11", "--empirical", "h_source.docx", "--out", "h_ledger.json"), 0)
+    led = L.load_json("h_ledger.json")
+    nums = sorted(it["normalized"] for it in led["items"] if it["kind"] == "number")
+    check("glued figures reach the ledger", all(n in nums for n in ("45", "95", "70.1", "85.2", "2.1", "0.03", "12", "1", "3", "4")), True)
+    check("the hash is not a number", any(len(n) > 10 for n in nums), False)
+    open("h_EN.md", "w", encoding="utf-8").write(H_EN_MD)
+    check("build en", run(s("build_docx_from_md.py"), "--md", "h_EN.md", "--lang", "en", "--out", "h_EN.docx"), 0)
+    rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "h_ledger.json", "--paper", "empirical", "--target", "h_EN.docx",
+             "--locale", "en", "--out", "h_recon.json")
+    rep = L.load_json("h_recon.json")
+    check("reconcile en: exit 0 — the spaces put back by the translator change nothing", rc, 0)
+    check("reconcile en: nothing missing", rep["ledger"]["missing"], [])
+    check("reconcile en: nothing introduced", rep["ledger"]["introduced"], [])
+    check("reconcile en: table ok", rep["tables"]["mismatches"], [])
+
+
 def main() -> int:
     keep = None
     if "--keep" in sys.argv:
@@ -758,6 +823,7 @@ def main() -> int:
         part_e(work)
         part_f(work)
         part_g(work)
+        part_h(work)
     finally:
         os.chdir(HERE)
         if not keep:
