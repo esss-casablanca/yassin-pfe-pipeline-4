@@ -38,8 +38,8 @@ import unicodedata
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
-PARSER_VERSION = "4"  # bump whenever find_numbers / find_citations change what they return
-PARSER_COMPATIBLE = {"3"}  # older ledgers the reconciler still accepts (with a warning) — see reconcile_ledger.py
+PARSER_VERSION = "5"  # bump whenever find_numbers / find_citations change what they return
+PARSER_COMPATIBLE = {"3", "4"}  # older ledgers the reconciler still accepts (with a warning) — see reconcile_ledger.py
 
 GROUP_SPACES = "     "  # nbsp, narrow nbsp, thin space, figure space, space
 EN_GROUP = ",    ٬"  # comma, no-break spaces, Arabic thousands separator (not the plain space)
@@ -157,26 +157,46 @@ class NumberHit:
 
 # ordinal suffixes glued to a number ("1er octobre", "2e", "3rd"): the number is read, the suffix is not a word
 _ORDINAL = r"(?P<ord>(?:er|ère|ere|re|e|ème|eme|st|nd|rd|th))?"
+# Letters typed against a number never hide it (v0.2.8). Students lose the spaces of table cells ("IC95%", "n45",
+# "p0,03", "45ans", "150patients", "OR2,1", "mixtes115", "etal.,2021Mondial") and the translation puts them back
+# ("95% CI", "n = 45", "p = 0.03", "45 years"): the two sides must read the same figures, so the parser reads the
+# digits whatever letter precedes or follows them — codes and identifiers included ("D03-P04" reads 3 and 4,
+# "H1N1" 1 and 1, "B12" 12): they are copied as typed on both sides, so they compare equal, and the ledger simply
+# carries them. What still hides a number: a digit, "_" or a decimal/section separator right before it ("2,5"
+# never reads 5, "2.3.1" is blanked), an item/citation label glued after it ("14b", "2025b", "23a-d",
+# "Tableau 8bis"), an address ("dbali45@gmail.com"); a hexadecimal hash (SHA-256) and a URL/DOI are
+# blanked beforehand; the "-" of "pre-2015", "Round-2" or "WHO-5" is a hyphen, never a minus sign. A decimal typed
+# without its zero after a space, "=", "<", "(" or "[" (APA "p = .05", ",009") reads 0.05 and 0.009.
+_UP = "A-ZÀ-ÖØ-ÝŒ"          # Latin capitals (× U+00D7 excluded: "2×2" reads two numbers)
+_BEFORE_NUM = r"(?<![0-9_])(?<!\d[,.])"
+_SIGN = r"(?:(?<![\w])[-−])?"
+# a capital glued after the number does not hide it either ("2023PRFI", "2D03-P04", "2021Mondial" read 2023, 2, 2021:
+# a lost space before an acronym is far more common in a deposited table than a code like "6S", which reads 6 on
+# both sides anyway); an item/citation label does ("14b", "8bis")
+_AFTER_NUM = r"(?![\d_@])(?!(?:[a-d]|bis|ter)(?![a-zà-ÿ]))"
+# ".05" / ",009": a leading decimal separator after a space, "=", "<", "(" or "[" (or at the start of the text)
+_LEAD_DEC = r"(?:(?<=[=<>≤≥(:;/\[])|(?<![^\s]))[.,]\d+"
+HEX_HASH = re.compile(r"\b[0-9a-f]{32,}\b")   # SHA-256 and the like, copied verbatim on both sides
 
 
 def _fr_pattern() -> re.Pattern:
     sp = f"[{GROUP_SPACES}]"
     # decimal comma (French) or, as a fallback, decimal point: "2.3" must read the same in every locale
     return re.compile(
-        rf"(?<![\w.,])(?P<num>[-−]?(?:\d{{1,3}}(?:{sp}\d{{3}})+|\d+)(?:[,.]\d+)?){_ORDINAL}(?![\w])"
+        rf"{_BEFORE_NUM}(?P<num>{_SIGN}(?:\d{{1,3}}(?:{sp}\d{{3}})+|\d+)(?:[,.]\d+)?|{_LEAD_DEC}){_ORDINAL}{_AFTER_NUM}"
     )
 
 
 def _en_pattern() -> re.Pattern:
     g = f"[{EN_GROUP}]"
-    return re.compile(rf"(?<![\w.,])(?P<num>[-−]?(?:\d{{1,3}}(?:{g}\d{{3}})+|\d+)(?:[.{AR_DECIMAL}]\d+)?){_ORDINAL}(?![\w])")
+    return re.compile(rf"{_BEFORE_NUM}(?P<num>{_SIGN}(?:\d{{1,3}}(?:{g}\d{{3}})+|\d+)(?:[.{AR_DECIMAL}]\d+)?|{_LEAD_DEC}){_ORDINAL}{_AFTER_NUM}")
 
 
 def _ar_pattern() -> re.Pattern:
     # Arabic orthography glues clitics to the next word: "و78,8 %" (and 78.8 %), "الـ210" (the 210), "ب2" (with 2).
     # An Arabic letter or the tatweel before a digit therefore does not hide the number; a Latin letter or a digit does.
     g = f"[{EN_GROUP}]"
-    return re.compile(rf"(?<![A-Za-zÀ-ÿ0-9.,_])(?P<num>[-−]?(?:\d{{1,3}}(?:{g}\d{{3}})+|\d+)(?:[.{AR_DECIMAL}]\d+)?)(?![A-Za-zÀ-ÿ0-9_])")
+    return re.compile(rf"{_BEFORE_NUM}(?P<num>{_SIGN}(?:\d{{1,3}}(?:{g}\d{{3}})+|\d+)(?:[.{AR_DECIMAL}]\d+)?|{_LEAD_DEC}){_AFTER_NUM}")
 
 
 _PATTERNS = {"fr": _fr_pattern(), "en": _en_pattern(), "ar": _ar_pattern()}
@@ -204,7 +224,8 @@ def normalize_number(raw: str, locale: str) -> str:
 
 
 # ---- things that look like numbers but are not values of the paper -----------------------------------------
-URL_DOI = re.compile(r"(?i)(?:https?://|www\.)\S+|\bdoi\s*:\s*\S+|\b10\.\d{4,9}/[^\s\"<>]+")
+URL_DOI = re.compile(r"(?i)(?:https?://|www\.)\S+|\bdoi\s*:\s*\S+|\b10\.\d{4,9}/[^\s\"<>]+"
+                     r"|\b[\w-]+(?:\.[\w-]+)*\.(?:com|org|net|app|edu|gov|int|io|ma|fr|ca|uk|ch|be|eu|info)/\S+")  # bare "consensus.app/…"
 # numeric dates (06/10/2026, 6-10-2026, 2026-10-06): read as one item of role "date", verified by hand in the
 # translations, where the format legitimately changes ("6 October 2026") — v0.2.7
 DATE_NUMERIC = re.compile(r"(?<![\w.,])(?:(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})|(\d{1,2})[-/.](\d{1,2})[-/.](\d{4}))(?![\w])")
@@ -318,6 +339,7 @@ def find_numbers(text: str, locale: str, strip_citations: bool = True) -> list[N
     intervals ([1,3 ; 3,4]) are kept. DOIs, URLs and multi-level section numbers (2.3.1) are ignored."""
     text = nfc(text).translate(ARABIC_INDIC)
     work = _blank(URL_DOI, text)
+    work = _blank(HEX_HASH, work)
     work = _blank(MULTI_DOT, work)
     if strip_citations:
         spans = [(m.start(), m.end()) for m in _citation_brackets(work)]
@@ -325,12 +347,17 @@ def find_numbers(text: str, locale: str, strip_citations: bool = True) -> list[N
             work = work[:a] + " " * (b - a) + work[b:]
     pat = _PATTERNS.get(locale, _PATTERNS["en"])
     hits: list[NumberHit] = []
+    date_spans: list[tuple[int, int]] = []
     for m in DATE_NUMERIC.finditer(work):
         y, mo, d = (m.group(1), m.group(2), m.group(3)) if m.group(1) else (m.group(6), m.group(5), m.group(4))
+        if not (1 <= int(d) <= 31 and 1 <= int(mo) <= 12 and 1900 <= int(y) <= 2100):
+            continue              # "45-28-0001" is a catalogue number, not a date (v0.2.8): its parts are read as numbers
         norm = f"{int(d)}-{int(mo)}-{y}"
         ctx = text[max(0, m.start() - 60): m.end() + 60].replace("\n", " ")
         hits.append(NumberHit(raw=m.group(0), normalized=norm, start=m.start(), end=m.end(), role_hint="date", context=ctx))
-    work = _blank(DATE_NUMERIC, work)
+        date_spans.append((m.start(), m.end()))
+    for a, b in reversed(date_spans):
+        work = work[:a] + " " * (b - a) + work[b:]
     for m in DATE_WORDS.finditer(work):
         gd = m.groupdict()
         mo = next(int(k[1:]) for k, v in gd.items() if v and k[0] in "mn" and k[1:].isdigit())
@@ -594,9 +621,15 @@ def superscript_citations(doc) -> bool:
     return False
 
 
+_SPLIT_THOUSANDS = re.compile(r"(?<![\d,.])(\d{1,3})\n(\d{3})(?!\d)")
+
+
 def cell_text(tc_el, sup_cites: bool = False) -> str:
-    """Text of a table cell: its paragraphs (nested tables included) joined by line breaks."""
-    return "\n".join(para_text(p, sup_cites) for p in tc_el.iter() if _local(p.tag) == "p")
+    """Text of a table cell: its paragraphs (nested tables included) joined by line breaks. A figure broken over a
+    line break at a thousands boundary ("1⏎588", "500⏎000+") is one figure (v0.2.8): the break stands for the
+    grouping space the student typed Enter instead of."""
+    text = "\n".join(para_text(p, sup_cites) for p in tc_el.iter() if _local(p.tag) == "p")
+    return _SPLIT_THOUSANDS.sub(r"\1 \2", text)
 
 
 _TITLE_LABEL = re.compile(r"^\s*(?:chapitre|chapter|partie|part|section|[ée]tape|step|phase|axe|axis|objectif|objective|"

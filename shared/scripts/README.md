@@ -47,3 +47,9 @@ What the scripts cannot judge: the **hedge and strength of claims** (the claim r
 assistant), figure *images* (the assistant compares the figure's values with the ledger figure item), and the
 visual rendering in Word/PowerPoint (always open the file once before sign-off — Arabic bidi punctuation can
 need a manual nudge).
+
+**Number parser v5 (v0.2.8).** A figure typed against a letter in the deposited paper ("IC95%", "n45", "p0,03",
+"45ans", "mixtes115") is read, and read the same in the translation where the spaces are back; codes are read as
+typed on both sides ("D03-P04" → 3, 4); leading decimals ("p = .05"), hexadecimal hashes and bare URLs handled;
+"45-28-0001" is not a date. v3/v4 ledgers are accepted with a NOTE (rebuild with `--carry-over` when the NOTE's
+classes appear, "introduced" glued figures included).
