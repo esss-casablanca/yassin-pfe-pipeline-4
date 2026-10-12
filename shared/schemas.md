@@ -82,6 +82,12 @@ paragraphs and soft line breaks, and behind hand bullets. The reconciliation rep
 Parser v5 (plugin v0.2.8): a figure typed against a letter is read ("IC95%" → 95, "n45" → 45, "45ans" → 45, "D03-P04"
 → 3 and 4) on both sides; "p = .05" reads 0.05; hexadecimal hashes and bare URLs are blanked; a numeric date is an
 item only when its day, month and year are plausible. v3/v4 ledgers accepted with a NOTE.
+Parser v6 (plugin v0.2.9): integers listed with commas ("items 1,2,3", "réf. 20,26,28-30") are read one by one in
+every locale; "1,234,567" reads 1234567. v3–v5 ledgers accepted with a NOTE. The translation and deck reports carry
+`rebuild_ledger_first: true` when the ledger predates the parser and Major findings remain.
+Parser v7 (plugin v0.2.10): a comma after a word with a stray space ("et al. ,2021") is punctuation — the year reads
+2021, not 0.2021; the leading-decimal reading stays after an operator, a bracket, a one-letter symbol, a digit or at
+the start of the text. v3–v6 ledgers accepted with a NOTE.
 
 ## soutenance_issue_register.json (p4-02)
 ```json
