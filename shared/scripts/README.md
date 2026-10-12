@@ -53,3 +53,14 @@ need a manual nudge).
 typed on both sides ("D03-P04" → 3, 4); leading decimals ("p = .05"), hexadecimal hashes and bare URLs handled;
 "45-28-0001" is not a date. v3/v4 ledgers are accepted with a NOTE (rebuild with `--carry-over` when the NOTE's
 classes appear, "introduced" glued figures included).
+
+**Number parser v6 (v0.2.9).** Integers listed with commas and no space ("items 1,2,3,4,5,7,10", "réf. 20,26,28-30")
+are a list in every locale, each integer read on its own; French decimals and intervals ("2,9", "1,2–3,4"), runs
+with a group opening on 0 and two-integer pairs are unchanged; "1,234,567" reads 1234567 everywhere. v3–v5 ledgers
+are accepted with a NOTE; when Major findings remain under an older ledger the verdict says "REBUILD THE LEDGER
+FIRST" (`rebuild_ledger_first: true` in the report).
+
+**Number parser v7 (v0.2.10).** A comma typed after a word with a stray space ("Guillaumeetal. ,2021", "Omary ,2024")
+is punctuation: the digits read as an integer (2021), as in the translation. The leading-decimal reading ",009" is
+kept after "=", "<", ">", "≤", "≥", "±", "(", "[", ":", ";", "/", a one-letter symbol ("p ,009", "α ,82"), a digit, and
+at the start of the text; a leading point is never touched. v3–v6 ledgers are accepted with the NOTE.

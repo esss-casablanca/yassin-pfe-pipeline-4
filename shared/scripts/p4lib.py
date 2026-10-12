@@ -38,8 +38,8 @@ import unicodedata
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
-PARSER_VERSION = "5"  # bump whenever find_numbers / find_citations change what they return
-PARSER_COMPATIBLE = {"3", "4"}  # older ledgers the reconciler still accepts (with a warning) — see reconcile_ledger.py
+PARSER_VERSION = "7"  # bump whenever find_numbers / find_citations change what they return
+PARSER_COMPATIBLE = {"3", "4", "5", "6"}  # older ledgers the reconciler still accepts (with a warning) — see reconcile_ledger.py
 
 GROUP_SPACES = "     "  # nbsp, narrow nbsp, thin space, figure space, space
 EN_GROUP = ",    ٬"  # comma, no-break spaces, Arabic thousands separator (not the plain space)
@@ -177,6 +177,53 @@ _AFTER_NUM = r"(?![\d_@])(?!(?:[a-d]|bis|ter)(?![a-zà-ÿ]))"
 # ".05" / ",009": a leading decimal separator after a space, "=", "<", "(" or "[" (or at the start of the text)
 _LEAD_DEC = r"(?:(?<=[=<>≤≥(:;/\[])|(?<![^\s]))[.,]\d+"
 HEX_HASH = re.compile(r"\b[0-9a-f]{32,}\b")   # SHA-256 and the like, copied verbatim on both sides
+# Integers listed with commas and no space (v0.2.9, parser v6): "items 1,2,3,4,5,7,10", "réf. 20,26,28-30", "(6,8,9)".
+# A decimal has one comma, so a run of three or more integers joined by commas is a list in every locale: each
+# integer is read, as in the translation ("items 1, 2, 3"). A run whose groups after the first all have three digits
+# ("1,234,567") is a number with comma thousands, read 1234567 in every locale. Two integers ("items 2,9") are not
+# a list: "2,9" stays the French decimal 2.9 (a decimal after a list word exists too: "inter-items 0,234"). Never a
+# list either: a French interval "1,2–3,4" and a run with a group opening on 0 ("0,5,0,6").
+COMMA_LIST = re.compile(r"(?<![\d,.])\d{1,4}(?:[-–]\d{1,4})?(?:,\d{1,4}(?:[-–]\d{1,4})?){2,}(?![\d,]|\.\d)")
+
+
+def _split_comma_lists(work: str) -> str:
+    """Rewrite comma-joined integer lists in place (same length) so that each integer is read on its own;
+    comma thousands ("1,234,567") become no-break group spaces. See COMMA_LIST."""
+    def fix(m: re.Match) -> str:
+        run = m.group(0)
+        groups = run.split(",")
+        if re.fullmatch(r"\d+,\d+[-–]\d+,\d+", run) or any(re.match(r"0", g) for g in groups):
+            return run            # "1,2–3,4" is a French interval, "0,5,0,6" two decimals: not item lists
+        if all(re.fullmatch(r"\d{3}", g) for g in groups[1:]) and re.fullmatch(r"\d{1,3}", groups[0]):
+            return run.replace(",", "\u00a0")
+        return run.replace(",", ";")
+    return COMMA_LIST.sub(fix, work)
+
+
+# A comma typed after a word with a stray space before it is punctuation, not a decimal (v0.2.10, parser v7):
+# "Guillaumeetal. ,2021 PRFI", "Omary ,2024" read the year 2021 / 2024, as in the translation ("et al., 2021"),
+# not 0.2021. The leading-decimal reading ",009" (v0.2.8) is kept where a value is expected: after "=", "<", ">",
+# "≤", "≥", "±", "(", "[", ":", ";" or "/" (spaces allowed between), after a one-letter symbol ("p ,009", "α ,82",
+# "r ,45"), after a digit, and at the start of the text. A point is never touched ("of .05" stays 0.05).
+_STRAY_COMMA = re.compile(r"(?<=\S)(\s+),(?=\d)")
+_DECIMAL_CONTEXT = set("=<>≤≥±≈~(:;/[")
+_CLOSERS = set(")]»”\"’'")
+
+
+def _drop_stray_commas(work: str) -> str:
+    """Blank (same length) a comma that follows a word, an abbreviation or a closing bracket/quote with spaces in
+    between, so that the digits after it read as an integer. See _STRAY_COMMA."""
+    def fix(m: re.Match) -> str:
+        head = work[:m.start()]
+        prev = head[-1]
+        token = re.search(r"\S+$", head).group(0)
+        letters = len(re.findall(r"[^\W\d_]", token))
+        if prev in _DECIMAL_CONTEXT or prev.isdigit():
+            return m.group(0)
+        if prev in _CLOSERS or (prev == "." and letters >= 2) or (prev.isalpha() and letters >= 2):
+            return m.group(1) + " "
+        return m.group(0)
+    return _STRAY_COMMA.sub(fix, work)
 
 
 def _fr_pattern() -> re.Pattern:
@@ -345,6 +392,8 @@ def find_numbers(text: str, locale: str, strip_citations: bool = True) -> list[N
         spans = [(m.start(), m.end()) for m in _citation_brackets(work)]
         for a, b in reversed(spans):
             work = work[:a] + " " * (b - a) + work[b:]
+    work = _split_comma_lists(work)
+    work = _drop_stray_commas(work)
     pat = _PATTERNS.get(locale, _PATTERNS["en"])
     hits: list[NumberHit] = []
     date_spans: list[tuple[int, int]] = []

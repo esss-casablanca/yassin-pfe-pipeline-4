@@ -269,7 +269,8 @@ def main() -> int:
         print(f"NOTE — {a.ledger} was built with number parser v{pv}; this script uses v{L.PARSER_VERSION}. The check runs; "
               f"if it reports numbers or entries of the reference list, an annex or a declaration read as references, "
               f"a date read as loose numbers, a result typed in a heading style, or figures 'introduced' that the "
-              f"source types against letters (IC95%, n45, 45ans), rebuild the ledger with extract_ledger.py "
+              f"source types against letters (IC95%, n45, 45ans), or decimals where the source lists items with commas "
+              f"(\"items 1,2,3\", \"réf. 20,26,28-30\" — v0.2.9), or a year read as a decimal after a stray space before its comma (\"et al. ,2021\" — v0.2.10), rebuild the ledger with extract_ledger.py "
               f"--carry-over and run it again (a clean report needs nothing).")
     if a.mode == "translation":
         rep = reconcile_translation(ledger, a.paper, a.target, a.locale, a.ignore)
@@ -294,6 +295,15 @@ def main() -> int:
               f"{len(rep['introduced'])} numbers introduced")
         for x in rep["introduced"]:
             print(f"   slide {x['slide']}: {x['raw']}  …{x['context']}…")
+    if pv != L.PARSER_VERSION and rep["major_findings"]:
+        # v0.2.9: a ledger older than the parser is the first suspect — say so in the verdict itself, not only in the
+        # NOTE above, so that the student rebuilds before anyone looks for a defect in the translation or the script
+        rep["verdict"] = (f"NOT {'attestable' if a.mode == 'translation' else 'lockable'} — REBUILD THE LEDGER FIRST (built with parser v{pv}, this script uses "
+                          f"v{L.PARSER_VERSION}): extract_ledger.py … --carry-over <copy of the old ledger>, then run "
+                          f"every check of this step again; only the findings that remain are to be resolved. / "
+                          f"Reconstruisez d'abord le registre (--carry-over), puis relancez les contrôles.")
+        rep["rebuild_ledger_first"] = True
+        L.save_json(rep, a.out)
     print("verdict:", rep["verdict"])
     return 0 if rep["major_findings"] == 0 else 1
 
