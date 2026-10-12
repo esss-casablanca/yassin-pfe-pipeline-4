@@ -810,6 +810,204 @@ def part_h(work: str) -> None:
     check("reconcile en: table ok", rep["tables"]["mismatches"], [])
 
 
+I_EN_MD = """# Supplementary tables
+
+## Results
+
+Five of the ten JBI items (1, 2, 3, 4, 5, 7, 10 partially) could not be rated; see the primary publications (ref. 20, 26, 28–30).
+The odds ratio was 2.9 (95% CI 1.2–3.4) among 1,234,567 residents.
+
+| Study | Tool | Justification |
+|---|---|---|
+| Woodgate 2017 | JBI | items 6, 8, 9 = Yes |
+| Tsai 2023 | AMSTAR 2 | items 1, 4, 8 = Yes |
+
+## References
+
+1. Ajam A, et al. Patient satisfaction. J Radiol. 2017;12(3):441-9.
+"""
+
+I_AR_MD = """# الجداول التكميلية
+
+## النتائج
+
+تعذّر تقييم خمسة من البنود العشرة (1،2،3،4،5،7،10 جزئياً)؛ انظر المنشورات الأولية (المراجع 20,26,28-30).
+بلغت نسبة الأرجحية 2٫9 (فاصل الثقة 95% 1٫2–3٫4) لدى 1٬234٬567 مقيماً.
+
+| الدراسة | الأداة | التبرير |
+|---|---|---|
+| Woodgate 2017 | JBI | البنود 6,8,9 = نعم |
+| Tsai 2023 | AMSTAR 2 | البنود 1، 4، 8 = نعم |
+
+## References
+
+1. Ajam A, et al. Patient satisfaction. J Radiol. 2017;12(3):441-9.
+"""
+
+
+def part_i(work: str) -> None:
+    """v0.2.9 — integers listed with commas and no space ("items 1,2,3,4,5,7,10", "réf. 20,26,28-30") are a list in
+    every locale, read item by item as in the translation; French decimals and intervals are unchanged; a ledger of
+    the previous parser that misread them is rebuilt with --carry-over and the reconciliation comes back clean."""
+    import docx
+    s = lambda n: os.path.join(SCRIPTS, n)  # noqa: E731
+    os.chdir(work)
+    print("I. v0.2.9 — integer lists typed with commas")
+    for text, loc, want in [("(1,2,3,4,5,7,10 partiellement)", "fr", ["1", "2", "3", "4", "5", "7", "10"]),
+                            ("items 6,8,9=Oui", "fr", ["6", "8", "9"]), ("(items 1,4,8=Oui)", "fr", ["1", "4", "8"]),
+                            ("(réf. 20,26,28-30)", "fr", ["20", "26", "28", "30"]),
+                            ("items 1,2,3,4,5,7,10", "en", ["1", "2", "3", "4", "5", "7", "10"]),
+                            ("البنود 6,8,9", "ar", ["6", "8", "9"]),
+                            ("1,234,567 habitants", "fr", ["1234567"]), ("1,234,567 residents", "en", ["1234567"]),
+                            ("OR 2,9 ; IC 1,2–3,4", "fr", ["2.9", "1.2", "3.4"]), ("IC 95 % : 1,2-3,4", "fr", ["95", "1.2", "3.4"]),
+                            ("items 2,9", "fr", ["2.9"]), ("corrélation inter-items 0,234", "fr", ["0.234"]),
+                            ("0,5,0,6", "fr", ["0.5"]), ("entre 2,5 et 3,5", "fr", ["2.5", "3.5"]), ("[1,3 ; 3,4]", "fr", ["1.3", "3.4"])]:
+        check(f"{loc} reads {text!r} as {want}", [h.normalized for h in L.find_numbers(text, loc)], want)
+    check("[1,2,3] stays a citation", L.find_citations("comme rapporté [1,2,3]"), {"[1]": 1, "[2]": 1, "[3]": 1})
+    d = docx.Document()
+    d.add_heading("Tableaux supplémentaires", level=1)
+    d.add_heading("Résultats", level=1)
+    d.add_paragraph("Cinq des dix items JBI (1,2,3,4,5,7,10 partiellement) ne peuvent être cotés ; voir les publications "
+                    "primaires (réf. 20,26,28-30). L’OR était de 2,9 (IC 95 % 1,2–3,4) chez 1,234,567 résidents.")
+    t = d.add_table(rows=3, cols=3)
+    for r, row in enumerate([("Étude", "Outil", "Justification"), ("Woodgate 2017", "JBI", "items 6,8,9=Oui"),
+                             ("Tsai 2023", "AMSTAR 2", "items 1,4,8=Oui")]):
+        for c, v in enumerate(row):
+            t.cell(r, c).text = v
+    d.add_heading("Références", level=1)
+    d.add_paragraph("1. Ajam A, et al. Patient satisfaction. J Radiol. 2017;12(3):441-9.")
+    d.save("i_source.docx")
+    check("extract", run(s("extract_ledger.py"), "--project", "D99-T12", "--review", "i_source.docx", "--out", "i_ledger.json"), 0)
+    led = L.load_json("i_ledger.json")
+    nums = sorted(it["normalized"] for it in led["items"] if it["kind"] == "number")
+    check("no list read as a decimal", [n for n in nums if n in ("1.2", "20.26", "6.8", "1.4")], ["1.2"])  # the CI bound only
+    for name, md, loc in (("en", I_EN_MD, "en"), ("ar", I_AR_MD, "ar")):
+        open(f"i_{name}.md", "w", encoding="utf-8").write(md)
+        check(f"build {name}", run(s("build_docx_from_md.py"), "--md", f"i_{name}.md", "--lang", loc, "--out", f"i_{name}.docx"), 0)
+        rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "i_ledger.json", "--paper", "review", "--target",
+                 f"i_{name}.docx", "--locale", loc, "--out", f"i_recon_{name}.json")
+        rep = L.load_json(f"i_recon_{name}.json")
+        check(f"reconcile {name}: exit 0", rc, 0)
+        check(f"reconcile {name}: nothing missing", rep["ledger"]["missing"], [])
+        check(f"reconcile {name}: nothing introduced", rep["ledger"]["introduced"], [])
+        check(f"reconcile {name}: tables ok", rep["tables"]["mismatches"], [])
+    # a ledger of the previous parser: the reconciler says to rebuild it first, and the rebuilt ledger is clean
+    old = L.load_json("i_ledger.json")
+    old["parser_version"] = "5"
+    for it in old["items"]:
+        if it["kind"] == "table":
+            it["numbers_normalized"] = ["1.4" if n == "1" else n for n in it["numbers_normalized"]]
+    L.save_json(old, "i_ledger_v5.json")
+    rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "i_ledger_v5.json", "--paper", "review", "--target",
+             "i_en.docx", "--locale", "en", "--out", "i_recon_old.json")
+    rep = L.load_json("i_recon_old.json")
+    check("old ledger: Major findings", rc, 1)
+    check("old ledger: the verdict says to rebuild the ledger first", rep.get("rebuild_ledger_first"), True)
+    check("rebuild --carry-over", run(s("extract_ledger.py"), "--project", "D99-T12", "--review", "i_source.docx", "--out",
+                                      "i_ledger_v6.json", "--carry-over", "i_ledger_v5.json"), 0)
+    rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "i_ledger_v6.json", "--paper", "review", "--target",
+             "i_en.docx", "--locale", "en", "--out", "i_recon_new.json")
+    check("rebuilt ledger: exit 0", rc, 0)
+
+
+J_EN_MD = """# Data extraction
+
+## Results
+
+The matrix (Omary, 2024) lists four programmes; the odds ratio was 2.9.
+
+| Author/Year | Design | Country |
+|---|---|---|
+| Guillaume et al., 2021 PRFI | Cohort | France |
+| Merry et al., 2023 | Survey | Canada |
+
+## References
+
+1. Guillaume M, et al. Early childhood programmes. Rev Epidemiol. 2021;69(2):101-9.
+"""
+
+J_AR_MD = """# استخراج البيانات
+
+## النتائج
+
+تعرض المصفوفة (Omary، 2024) أربعة برامج؛ وبلغت نسبة الأرجحية 2٫9.
+
+| المؤلف/السنة | التصميم | البلد |
+|---|---|---|
+| Guillaume et al.,2021 PRFI | أترابية | فرنسا |
+| Merry et al.، 2023 | مسح | كندا |
+
+## References
+
+1. Guillaume M, et al. Early childhood programmes. Rev Epidemiol. 2021;69(2):101-9.
+"""
+
+
+def part_j(work: str) -> None:
+    """v0.2.10 — a comma typed after a word with a stray space ("Guillaumeetal. ,2021 PRFI", "Omary ,2024") is
+    punctuation: the year reads 2021 on both sides, not 0.2021 in the source. The leading-decimal reading of v0.2.8 is
+    kept where a value is expected ("p = ,009", "p ,009", "α ,82", "(,05)", "12 ,5", "of .05"). A ledger of the
+    previous parser is flagged "rebuild first" and is clean after --carry-over (case EL MALYH, D03-P04, 12/10/2026)."""
+    import docx
+    s = lambda n: os.path.join(SCRIPTS, n)  # noqa: E731
+    os.chdir(work)
+    print("J. v0.2.10 — stray space before a comma after a word")
+    for text, loc, want in [("Guillaumeetal. ,2021 PRFI", "fr", ["2021"]), ("Guillaume et al.,2021 PRFI", "fr", ["2021"]),
+                            ("Guillaume et al., 2021 PRFI", "en", ["2021"]), ("Guillaume et al.,2021 PRFI", "ar", ["2021"]),
+                            ("Omary ,2024 ; Azad ,2020", "fr", ["2024", "2020"]), ("(Smith) ,2019", "fr", ["2019"]),
+                            ("Guillaume\n,2021", "fr", ["2021"]),
+                            ("p = ,009", "fr", ["0.009"]), ("p ,009", "fr", ["0.009"]), ("α ,82", "fr", ["0.82"]),
+                            ("(,05)", "fr", ["0.05"]), ("Score : ,82", "fr", ["0.82"]), ("12 ,5", "fr", ["12", "0.5"]),
+                            ("p = .05", "en", ["0.05"]), ("of .05", "en", ["0.05"]), (",82", "fr", ["0.82"])]:
+        check(f"{loc} reads {text!r} as {want}", [h.normalized for h in L.find_numbers(text, loc)], want)
+    d = docx.Document()
+    d.add_heading("Extraction des données", level=1)
+    d.add_heading("Résultats", level=1)
+    d.add_paragraph("La matrice (Omary ,2024) recense quatre programmes ; l’OR était de 2,9.")
+    t = d.add_table(rows=3, cols=3)
+    for r, row in enumerate([("Auteur/Année", "Devis", "Pays"), ("Guillaumeetal. ,2021 PRFI", "Cohorte", "France"),
+                             ("Merry et al. ,2023", "Enquête", "Canada")]):
+        for c, v in enumerate(row):
+            t.cell(r, c).text = v
+    d.add_heading("Références", level=1)
+    d.add_paragraph("1. Guillaume M, et al. Early childhood programmes. Rev Epidemiol. 2021;69(2):101-9.")
+    d.save("j_source.docx")
+    check("extract", run(s("extract_ledger.py"), "--project", "D99-T13", "--review", "j_source.docx", "--out", "j_ledger.json"), 0)
+    led = L.load_json("j_ledger.json")
+    check("no year read as a decimal", sorted(it["normalized"] for it in led["items"]
+                                              if it["kind"] == "number" and it["normalized"].startswith("0.")), [])
+    for name, md, loc in (("en", J_EN_MD, "en"), ("ar", J_AR_MD, "ar")):
+        open(f"j_{name}.md", "w", encoding="utf-8").write(md)
+        check(f"build {name}", run(s("build_docx_from_md.py"), "--md", f"j_{name}.md", "--lang", loc, "--out", f"j_{name}.docx"), 0)
+        rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "j_ledger.json", "--paper", "review", "--target",
+                 f"j_{name}.docx", "--locale", loc, "--out", f"j_recon_{name}.json")
+        rep = L.load_json(f"j_recon_{name}.json")
+        check(f"reconcile {name}: exit 0", rc, 0)
+        check(f"reconcile {name}: nothing missing", rep["ledger"]["missing"], [])
+        check(f"reconcile {name}: nothing introduced", rep["ledger"]["introduced"], [])
+        check(f"reconcile {name}: tables ok", rep["tables"]["mismatches"], [])
+    # the ledger of parser v6 read the year as 0.2021: flagged "rebuild first", clean after --carry-over
+    old = L.load_json("j_ledger.json")
+    old["parser_version"] = "6"
+    for it in old["items"]:
+        if it["kind"] == "table":
+            it["numbers_normalized"] = ["0.2021" if n == "2021" else n for n in it["numbers_normalized"]]
+        elif it["kind"] == "number" and it["normalized"] == "2021" and "Guillaume" in it.get("context", ""):
+            it["normalized"] = "0.2021"
+    L.save_json(old, "j_ledger_v6.json")
+    rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "j_ledger_v6.json", "--paper", "review", "--target",
+             "j_en.docx", "--locale", "en", "--out", "j_recon_old.json")
+    rep = L.load_json("j_recon_old.json")
+    check("old ledger: Major findings", rc, 1)
+    check("old ledger: the verdict says to rebuild the ledger first", rep.get("rebuild_ledger_first"), True)
+    check("rebuild --carry-over", run(s("extract_ledger.py"), "--project", "D99-T13", "--review", "j_source.docx", "--out",
+                                      "j_ledger_v7.json", "--carry-over", "j_ledger_v6.json"), 0)
+    for name, loc in (("en", "en"), ("ar", "ar")):
+        rc = run(s("reconcile_ledger.py"), "translation", "--ledger", "j_ledger_v7.json", "--paper", "review", "--target",
+                 f"j_{name}.docx", "--locale", loc, "--out", f"j_recon_new_{name}.json")
+        check(f"rebuilt ledger {name}: exit 0", rc, 0)
+
+
 def main() -> int:
     keep = None
     if "--keep" in sys.argv:
@@ -824,6 +1022,8 @@ def main() -> int:
         part_f(work)
         part_g(work)
         part_h(work)
+        part_i(work)
+        part_j(work)
     finally:
         os.chdir(HERE)
         if not keep:
