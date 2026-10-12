@@ -162,3 +162,44 @@ part H (a French source typed without spaces reconciled against its spaced Engli
 Checked on the 126 deposited papers: identity round trip 126/126 with no Major finding, and the reporting
 student's two papers reconciled against a copy with the spaces put back (author-year, units, counts, "IC95%")
 with no finding.
+
+## Version 0.2.9 — item lists typed with commas; "rebuild the ledger first" (9 October 2026)
+
+Reported by a student (D10-P02) at p4-05: a supplementary table of his review listed JBI/AMSTAR items and
+reference numbers with commas and no space ("items 1,2,3,4,5,7,10", "items 6,8,9", "réf. 20,26,28-30"). Parser v5
+read the first pair of each run as a French decimal (1.2, 6.8, 20.26, 1.4) and dropped the rest; the translation
+writes "items 1, 2, 3 …", so five Major findings appeared with no value changed. Parser v6 (`p4lib.py`,
+`COMMA_LIST`): a run of three or more integers joined by commas is a list in every locale, each integer read on its
+own — a decimal never has two commas. Unchanged: a French decimal or interval ("2,9", "1,2–3,4", "[1,3 ; 3,4]"),
+a run with a group opening on 0 ("0,5,0,6"), two integers ("items 2,9" stays 2.9 — "inter-items 0,234" is a real
+decimal); a run whose groups after the first all have three digits ("1,234,567") is one number with comma
+thousands, read 1234567 in every locale. Bracketed citation keys ("[1,2,3]") are unchanged.
+
+`reconcile_ledger.py`: when the ledger was built by an older parser and Major findings remain, the verdict itself now
+says "REBUILD THE LEDGER FIRST" (and the report carries `rebuild_ledger_first: true`): a student who synchronised a new
+version kept the step-1 ledger and the NOTE alone was missed (D03-P04, 7 October). `parser_version` is now `6`;
+v3–v5 ledgers are accepted with that NOTE. Regression tests: part I (a French source with comma lists reconciled
+against English and Arabic translations with no finding; a v5 ledger flagged "rebuild first", clean after
+`--carry-over`). Checked on the 126 deposited papers: readings change in 6 papers, all of them comma lists of items,
+references or domains (none a decimal); identity round trip 126/126 with no Major finding; the realistic spacing
+simulation unchanged (123/126, the three known simulator artefacts); the six papers reconciled against a copy with
+the lists spaced as a translator writes them: from 1–13 Major findings under v0.2.8 to none attributable to the
+parser under v0.2.9.
+
+## Version 0.2.10 — a stray space before a comma (12 October 2026)
+
+Reported by a student (D03-P04) at p4-05: one cell of the data-extraction matrix of her deposited review reads
+"Guillaumeetal. ,2021 PRFI" (a space typed before the comma). Parser v5 read ",2021" after a space as a decimal
+written without its zero (the APA ",009" rule of v0.2.8), 0.2021, while both translations write
+"Guillaume et al.,2021" and read the year 2021: "0.2021 missing" and "table not matching" in English and in Arabic,
+two Major findings per language with no value changed. Parser v7 (`p4lib.py`, `_drop_stray_commas`): a comma that
+follows a word of two letters or more, an abbreviation ("al.") or a closing bracket or quote, with spaces in between,
+is punctuation — the digits after it read as an integer, as in the translation. The leading-decimal reading is kept
+where a value is expected: after "=", "<", ">", "≤", "≥", "±", "(", "[", ":", ";" or "/", after a one-letter symbol
+("p ,009", "α ,82"), after a digit, and at the start of a cell; a leading point is never touched ("of .05").
+`parser_version` is now `7`; v3–v6 ledgers are accepted with the NOTE, and the verdict says "REBUILD THE LEDGER
+FIRST" when Major findings remain. Regression tests: part J (the reported cell and its neighbours, English and Arabic
+translations reconciled with no finding; a v6 ledger flagged "rebuild first", clean after `--carry-over`). Checked on
+the 126 deposited papers: one reading changes in all three locales — the reported cell, 0.2021 → 2021; the reporting
+student's review reconciled against a copy with the cell written as in her translations: 2 Major findings with the
+old ledger (as reported), none after the ledger is rebuilt with `--carry-over` (tables 6/6, references 44/44).

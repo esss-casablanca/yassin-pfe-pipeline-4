@@ -96,8 +96,12 @@ first name. Do not fabricate personal claims, grades, deadlines, jury names, rul
   Since v0.2.7 (parser v4) a v3 ledger is *accepted* with a NOTE, not refused: rebuild it with `--carry-over` only
   when a reconciliation reports findings that the new parser explains — numbers or entries of the reference list,
   an annex or a declaration read as references, a date read as loose numbers, a result typed in a heading style,
-  figures "introduced" in a translation because the source types them against letters ("IC95%", "n45" — v0.2.8) —
-  then re-run the reconciliations of the current step; a clean report under a v3 ledger needs nothing. A rebuilt
+  figures "introduced" in a translation because the source types them against letters ("IC95%", "n45" — v0.2.8),
+  decimals where the source lists items with commas ("items 1,2,3", "réf. 20,26,28-30" — v0.2.9), a year read as
+  a decimal because a space was typed before its comma ("et al. ,2021" — v0.2.10) —
+  then re-run the reconciliations of the current step; a clean report under an older ledger needs nothing. Since
+  v0.2.9 the verdict line itself says "REBUILD THE LEDGER FIRST" when the ledger predates the parser and Major
+  findings remain: rebuild before looking for a defect in the translation or reporting one to Dr Yassin. A rebuilt
   ledger maps references by text and numbers by context; a link listed as unmapped is re-linked with the student
   (a link to a reference-list number or to a date fragment is simply dropped — it never carried evidence).
   A student never patches or replaces the school's scripts; a suspected script defect is reported to Dr Yassin.
